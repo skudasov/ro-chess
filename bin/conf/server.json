@@ -1,0 +1,19 @@
+{
+	"LogLevel": "debug",
+	"LogPath": "",
+	"TCPAddr": "127.0.0.1:3563",
+	"WSAddr": "127.0.0.1:3653",
+	"MaxConnNum": 20000,
+	"FixedTurns": "",
+	"PlayerHP": 100,
+	"PlayerMP": 0,
+	"FigurePoolType": "infinite",
+	"BoardSizeX": 9,
+	"BoardSizeY": 15,
+	"ZoneScoreYTop": 0,
+	"ZoneStartYTopPlayerFrom": 1,
+	"ZoneStartYTopPlayerTo": 4,
+	"ZoneStartYBottomPlayerFrom": 11,
+	"ZoneStartYBottomPlayerTo": 14,
+	"ZoneScoreYBottom": 15
+}
