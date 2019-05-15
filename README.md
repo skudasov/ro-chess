@@ -82,6 +82,7 @@ When squad reaches opponent score zone their do dmg according to eq.1, overall d
 To run lint/test/server + front dev server:
 
 ```
+cd src/front && npm i
 make all
 ```
 For other commands see Makefile
