@@ -12,6 +12,7 @@ type figure struct {
 	X          int
 	Y          int
 	Alive      bool
+	Initiative int
 	HP         int
 	MP         int
 	AttackMin  int

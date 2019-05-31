@@ -13,7 +13,7 @@ type Figurable interface {
 type Visualizable interface {
 	GetName() string
 	GetVisualMark() string
-	GetOwner() string
+	GetOwnerName() string
 }
 
 // Movable represents actions to move figures on the board
@@ -31,6 +31,7 @@ type Movable interface {
 // Combatable represents actions performed in combat with other units
 type Combatable interface {
 	PerformAttack() int
+	GetInitiative() int
 	GetAlive() bool
 	SetAlive(bool)
 	SetHP(int)

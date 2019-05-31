@@ -41,6 +41,14 @@ type player struct {
 	FigurePool   entity.Poolable
 }
 
+type figuresByInitiative []entity.Figurable
+
+func (a figuresByInitiative) Len() int { return len(a) }
+func (a figuresByInitiative) Less(i, j int) bool {
+	return a[i].GetInitiative() > a[j].GetInitiative()
+}
+func (a figuresByInitiative) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+
 type cell struct {
 	Figure  entity.Figurable
 	Terrain int
@@ -50,10 +58,12 @@ type cell struct {
 type board struct {
 	Winner           string
 	Turn             string
+	TurnEnds         map[string]bool
 	ZoneStartTopX    []int
 	ZoneStartTopY    []int
 	ZoneStartBottomX []int
 	ZoneStartBottomY []int
 	Players          map[string]*player
+	Figures          []entity.Figurable
 	Canvas           [][]*cell
 }

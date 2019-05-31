@@ -87,8 +87,8 @@ func (m *Grunt) GetDefence() int {
 	return m.Figure.Armor
 }
 
-// GetOwner gets unit owner
-func (m *Grunt) GetOwner() string {
+// GetOwnerName gets unit owner
+func (m *Grunt) GetOwnerName() string {
 	return m.Figure.Owner
 }
 
@@ -150,6 +150,11 @@ func (m *Grunt) Clone() Figurable {
 	cloned := *m
 	cloned.Figure = &figure
 	return &cloned
+}
+
+// GetInitiative gets unit initiative
+func (m *Grunt) GetInitiative() int {
+	return m.Figure.Initiative
 }
 
 // AddAttack adds min/max attack according to buff mechanics

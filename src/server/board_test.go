@@ -65,22 +65,6 @@ func TestBoardSuite(t *testing.T) {
 		assert.Equal(t, cGameError{msg.GameError{"no board"}}, res)
 	})
 
-	t.Run("TestCannotMoveOtherPlayerFigure", func(t *testing.T) {
-		g := newBoardGame(t, board)
-		defer g.end()
-		res := g.P2.sendAndRead(cMoveFigure{msg.MoveFigure{"p1", g.board, 0, 0, 1}}, "GameError")
-		assert.Equal(t, cGameError{msg.GameError{"not your turn"}}, res)
-	})
-
-	t.Run("TestCannotMoveNotInYourTurn", func(t *testing.T) {
-		g := newBoardGame(t, board)
-		defer g.end()
-
-		//p1 moving his figure
-		res2 := g.P1.sendAndRead(cMoveFigure{msg.MoveFigure{"p1", g.board, 1, 1, 2}}, "GameError")
-		assert.Equal(t, cGameError{msg.GameError{"not your turn"}}, res2)
-	})
-
 	t.Run("TestFigureInCell", func(t *testing.T) {
 		g := newBoardGame(t, board)
 		defer g.end()
@@ -197,17 +181,6 @@ func TestBoardSuite(t *testing.T) {
 		assert.Equal(t, updMsg, resp2)
 	})
 
-	t.Run("TestCannotEndNotYourTurn", func(t *testing.T) {
-		g := newBoardGame(t, board)
-		defer g.end()
-
-		g.p2MovesFromPool(0, 0, 14)
-
-		// p1 ending turn
-		endTurnRes := g.P1.sendAndRead(cEndTurn{msg.EndTurn{"p1", board}}, "GameError")
-		assert.Equal(t, cGameError{msg.GameError{"not your turn"}}, endTurnRes)
-	})
-
 	t.Run("TestEndTurn", func(t *testing.T) {
 		g := newBoardGame(t, board)
 		defer g.end()
@@ -216,28 +189,13 @@ func TestBoardSuite(t *testing.T) {
 
 		// p2 ending turn
 		g.P2.send(cEndTurn{msg.EndTurn{"p2", board}})
+		g.P1.send(cEndTurn{msg.EndTurn{"p1", board}})
 		g.P2.read("UpdateBatch")
 		g.P1.read("UpdateBatch")
-		turnEnded := g.P2.read("TurnEnded")
-		assert.Equal(t, cTurnEnded{msg.TurnEnded{}}, turnEnded)
 		yourTurn := g.P1.read("YourTurn")
 		assert.Equal(t, cYourTurn{msg.YourTurn{}}, yourTurn)
-
-		// p1 moving
-		p1movMsg := cMoveFigure{msg.MoveFigure{"p1", board, 0, 8, 1}}
-		updMsg := cUpdateBatch{msg.UpdateBatch{
-			Figures: []e.Figurable{
-				e.NewPeon(
-					e.OptOwner("p1"),
-					e.OptMovable(false),
-					e.OptX(8),
-					e.OptY(1),
-				),
-			}}}
-		res3 := g.P1.sendAndRead(p1movMsg, "UpdateBatch")
-		assert.Equal(t, updMsg, res3)
-		res4 := g.P2.read("UpdateBatch")
-		assert.Equal(t, updMsg, res4)
+		yourTurn2 := g.P2.read("YourTurn")
+		assert.Equal(t, cYourTurn{msg.YourTurn{}}, yourTurn2)
 	})
 
 	t.Run("TestOutOfStartZone", func(t *testing.T) {
@@ -253,7 +211,7 @@ func TestBoardSuite(t *testing.T) {
 		outErr2 := g.P2.sendAndRead(p2movMsg2, "GameError")
 		assert.Equal(t, cGameError{msg.GameError{"figure out of start zone"}}, outErr2)
 
-		g.p2EndsTurn()
+		g.turnEnds()
 
 		// p1 y zone
 		p1movMsg := cMoveFigure{msg.MoveFigure{"p1", board, 0, 0, 5}}
@@ -301,7 +259,7 @@ func TestBoardSuite(t *testing.T) {
 		// p2 moving
 		g.p2MovesFromPool(0, 8, 14)
 		g.p2ActivatesFigure(8, 14)
-		g.p2EndsTurn()
+		resp1, _ := g.turnEnds()
 
 		// p2 ending turn asserting updates
 		peonUpdateMsg := cUpdateBatch{
@@ -319,11 +277,7 @@ func TestBoardSuite(t *testing.T) {
 				},
 			},
 		}
-		fu1 := g.P1.sendAndRead(cEndTurn{msg.EndTurn{"p1", board}}, "UpdateBatch")
-		assert.Equal(t, peonUpdateMsg, fu1)
-		g.P2.read("UpdateBatch")
-		g.P1.read("TurnEnded")
-		g.P2.read("YourTurn")
+		assert.Equal(t, peonUpdateMsg, resp1)
 	})
 
 	t.Run("TestP1TakesDamage", func(t *testing.T) {
@@ -331,14 +285,10 @@ func TestBoardSuite(t *testing.T) {
 		g := newBoardGame(t, board)
 		defer g.end()
 
-		// p2 moving
 		g.p2MovesFromPool(0, 0, 1)
 		g.p2ActivatesFigure(0, 1)
-		g.p2EndsTurn()
-		g.p1EndsTurn()
-		g.p2EndsTurn()
-		// now figure will attack p1
-		g.P1.send(cEndTurn{msg.EndTurn{"p1", board}})
+		g.turnEnds()
+		upd1, upd2 := g.turnEnds()
 		updMsg := cUpdateBatch{
 			msg.UpdateBatch{
 				Players: []e.Player{{"p1", 97, 0}},
@@ -356,12 +306,8 @@ func TestBoardSuite(t *testing.T) {
 				},
 			},
 		}
-		upd1 := g.P1.read("UpdateBatch")
 		assert.Equal(t, updMsg, upd1)
-		upd2 := g.P2.read("UpdateBatch")
 		assert.Equal(t, updMsg, upd2)
-		g.P1.read("TurnEnded")
-		g.P2.read("YourTurn")
 	})
 
 	t.Run("TestP2TakesDamage", func(t *testing.T) {
@@ -369,15 +315,10 @@ func TestBoardSuite(t *testing.T) {
 		g := newBoardGame(t, board)
 		defer g.end()
 
-		// p1 moving
-		g.p2EndsTurn()
 		g.p1MovesFromPool(0, 0, 1)
 		g.p1ActivatesFigure(0, 1)
-		g.p1EndsTurn()
-		g.p2EndsTurn()
-		g.p1EndsTurn()
-		// now figure will attack p2
-		g.P2.send(cEndTurn{msg.EndTurn{"p2", board}})
+		g.turnEnds()
+		upd1, upd2 := g.turnEnds()
 		updMsg := cUpdateBatch{
 			msg.UpdateBatch{
 				Players: []e.Player{{"p2", 97, 0}},
@@ -395,12 +336,8 @@ func TestBoardSuite(t *testing.T) {
 				},
 			},
 		}
-		upd1 := g.P2.read("UpdateBatch")
 		assert.Equal(t, updMsg, upd1)
-		upd2 := g.P1.read("UpdateBatch")
 		assert.Equal(t, updMsg, upd2)
-		g.P1.read("YourTurn")
-		g.P2.read("TurnEnded")
 	})
 
 	t.Run("TestP1Loses", func(t *testing.T) {
@@ -412,11 +349,8 @@ func TestBoardSuite(t *testing.T) {
 		// p2 moving
 		g.p2MovesFromPool(0, 0, 1)
 		g.p2ActivatesFigure(0, 1)
-		g.p2EndsTurn()
-		g.p1EndsTurn()
-		g.p2EndsTurn()
-		// now p1 loses
 		g.P1.send(cEndTurn{msg.EndTurn{"p1", board}})
+		g.P2.send(cEndTurn{msg.EndTurn{"p2", board}})
 		g.P1.read("UpdateBatch")
 		g.P2.read("UpdateBatch")
 		g.P1.read("YouLose")
@@ -429,15 +363,10 @@ func TestBoardSuite(t *testing.T) {
 		g := newBoardGame(t, board)
 		defer g.end()
 
-		// p1 moving
-		g.p2EndsTurn()
 		g.p1MovesFromPool(0, 0, 1)
 		g.p1ActivatesFigure(0, 1)
-		g.p1EndsTurn()
-		g.p2EndsTurn()
-		g.p1EndsTurn()
-		// now p2 loses
 		g.P2.send(cEndTurn{msg.EndTurn{"p2", board}})
+		g.P1.send(cEndTurn{msg.EndTurn{"p1", board}})
 		g.P2.read("UpdateBatch")
 		g.P1.read("UpdateBatch")
 		g.P1.read("YouWin")
@@ -449,13 +378,10 @@ func TestBoardSuite(t *testing.T) {
 		g := newBoardGame(t, board)
 		defer g.end()
 
-		// p2 moving
 		g.p2MovesFromPool(0, 0, 2)
 		g.p2ActivatesFigure(0, 2)
-		g.p2EndsTurn()
 		g.p1MovesFromPool(0, 0, 1)
 		g.p1ActivatesFigure(0, 1)
-		g.P1.send(cEndTurn{msg.EndTurn{"p1", board}})
 		updMsg := cUpdateBatch{
 			msg.UpdateBatch{
 				CombatLog: []e.CombatEvent{
@@ -488,27 +414,22 @@ func TestBoardSuite(t *testing.T) {
 				},
 			},
 		}
-		upd1 := g.P1.read("UpdateBatch")
+		upd1, upd2 := g.turnEnds()
 		assert.Equal(t, updMsg, upd1)
-		upd2 := g.P2.read("UpdateBatch")
 		assert.Equal(t, updMsg, upd2)
-		g.P1.read("TurnEnded")
-		g.P2.read("YourTurn")
 	})
 
 	t.Run("TestP2FigureDiesInCombat", func(t *testing.T) {
+		// TODO: test is usless now, refactor initiative so p2 can win
 		twoUnitsCombatBoard()
 		g := newBoardGame(t, board)
 		defer g.end()
 
-		// p1 moving
-		g.p2EndsTurn()
 		g.p1MovesFromPool(0, 0, 1)
 		g.p1ActivatesFigure(0, 1)
-		g.p1EndsTurn()
 		g.p2MovesFromPool(0, 0, 2)
 		g.p2ActivatesFigure(0, 2)
-		g.P2.send(cEndTurn{msg.EndTurn{"p2", board}})
+		upd1, upd2 := g.turnEnds()
 		updMsg := cUpdateBatch{
 			msg.UpdateBatch{
 				CombatLog: []e.CombatEvent{
@@ -541,11 +462,7 @@ func TestBoardSuite(t *testing.T) {
 				},
 			},
 		}
-		upd1 := g.P2.read("UpdateBatch")
 		assert.Equal(t, updMsg, upd1)
-		upd2 := g.P1.read("UpdateBatch")
 		assert.Equal(t, updMsg, upd2)
-		g.P2.read("TurnEnded")
-		g.P1.read("YourTurn")
 	})
 }

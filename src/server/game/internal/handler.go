@@ -27,7 +27,7 @@ func init() {
 	handler(&msg.Join{}, handleJoin)
 	handler(&msg.Disconnect{}, handleDisconnect)
 	handler(&msg.EndTurn{}, handleEndTurn)
-	handler(&msg.MoveFigure{}, handleMoveFigure)
+	handler(&msg.MoveFigure{}, handleMoveFromPool)
 	handler(&msg.ActivateFigure{}, handleActivateFigure)
 }
 
@@ -110,7 +110,7 @@ func handleJoin(args []interface{}) {
 	})
 }
 
-func handleMoveFigure(args []interface{}) {
+func handleMoveFromPool(args []interface{}) {
 	m := args[0].(*msg.MoveFigure)
 	a := args[1].(gate.Agent)
 	log.Debug("move msg: %v", m.Board)
@@ -120,10 +120,7 @@ func handleMoveFigure(args []interface{}) {
 	}
 	board := bs[m.Board]
 	player := board.Players[m.Token]
-	if board.Turn != m.Token {
-		a.WriteMsg(&msg.GameError{newErrGameNotYourTurn().Error()})
-		return
-	}
+
 	updatedFigures := make([]entity.Figurable, 0)
 	f, err := board.MoveFromPool(
 		m.Token,
@@ -159,39 +156,30 @@ func handleEndTurn(args []interface{}) {
 		return
 	}
 	board := bs[m.Board]
-	if board.Turn != m.Token {
-		a.WriteMsg(&msg.GameError{newErrGameNotYourTurn().Error()})
+	// process turn mechanics here
+	log.Debug("turn ended by %s", m.Token)
+	board.TurnEnds[m.Token] = true
+	if len(board.TurnEnds) != 2 {
+		log.Debug("not enough players for attack phase, waiting")
 		return
 	}
-	// process turn mechanics here
-	player := board.Players[m.Token]
-	log.Debug("turn ended by %s", m.Token)
+
+	log.Debug("turn phase: Battle")
 	updatedFigures := make([]entity.Figurable, 0)
 	updatedPlayers := make([]entity.Player, 0)
 	combatLogs := make([]entity.CombatEvent, 0)
-	// opponent turn
-	// score all figures that already in player damage zone
-	dead := player.Opponent.damagePlayer(&updatedPlayers, &updatedFigures)
 
-	// attack all that in vision
-	player.Opponent.attackFigures(&updatedFigures, &combatLogs)
-	// move in any other cases
-	player.Opponent.moveFigures(&updatedFigures)
-	board.Broadcast(&msg.UpdateBatch{updatedPlayers, combatLogs, updatedFigures})
-
-	// game ending
-	if dead {
+	deadPlayerName := board.processCombat(&updatedFigures, &updatedPlayers, &combatLogs)
+	if deadPlayerName != nil {
+		player := board.Players[*deadPlayerName]
 		player.Opponent.Agent.WriteMsg(&msg.YouWin{})
 		player.Agent.WriteMsg(&msg.YouLose{})
 		return
 	}
-
-	// another player turn
-	board.Turn = player.Opponent.Name
-
-	a.WriteMsg(&msg.TurnEnded{})
-	player.Opponent.Agent.WriteMsg(&msg.YourTurn{})
-	// client ends turn after timeout sending EntTurn msg
+	board.Broadcast(&msg.UpdateBatch{updatedPlayers, combatLogs, updatedFigures})
+	board.Broadcast(&msg.YourTurn{})
+	log.Debug("turn phase: Planning")
+	board.TurnEnds = make(map[string]bool)
 }
 
 func handleActivateFigure(args []interface{}) {
@@ -203,10 +191,6 @@ func handleActivateFigure(args []interface{}) {
 		return
 	}
 	board := bs[m.Board]
-	if board.Turn != m.Token {
-		a.WriteMsg(&msg.GameError{newErrGameNotYourTurn().Error()})
-		return
-	}
 	// if it's not a squad limit amount of moving figures so you cannot get all area revealed
 	// no one wants to die alone, without honor!
 	err := board.SetActive(m.X, m.Y, m.Active)

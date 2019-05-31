@@ -39,6 +39,16 @@ func (m *boardGame) p1MovesFromPool(PoolX, X, Y int) (interface{}, interface{}) 
 	return resp1, resp2
 }
 
+func (m *boardGame) turnEnds() (interface{}, interface{}) {
+	m.P2.send(cEndTurn{msg.EndTurn{"p2", m.board}})
+	m.P1.send(cEndTurn{msg.EndTurn{"p1", m.board}})
+	resp2 := m.P2.read("UpdateBatch")
+	resp1 := m.P1.read("UpdateBatch")
+	m.P2.read("YourTurn")
+	m.P1.read("YourTurn")
+	return resp1, resp2
+}
+
 func (m *boardGame) p2EndsTurn() {
 	m.P2.send(cEndTurn{msg.EndTurn{"p2", m.board}})
 	m.P2.read("UpdateBatch")

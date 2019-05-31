@@ -28,7 +28,7 @@ func (m *InfiniteFigurePool) Visualize() {
 			f := m.Figures[i]
 			fmt.Printf(
 				visTemplate,
-				f.GetOwner(),
+				f.GetOwnerName(),
 				f.GetVisualMark(),
 				f.GetHP(),
 				f.GetMP(),

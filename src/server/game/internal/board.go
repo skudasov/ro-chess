@@ -32,9 +32,10 @@ func createBoard(boardName string, players map[string]*player, xSize, ySize int)
 	}
 
 	b := &board{
-		Players: players,
-		Canvas:  c,
-		Turn:    ft}
+		Players:  players,
+		Canvas:   c,
+		TurnEnds: make(map[string]bool),
+		Turn:     ft}
 	b.CreateStartZones()
 	for _, p := range players {
 		p.Board = b
@@ -128,7 +129,7 @@ func (m *board) MoveFromPool(pToken string, side side, poolX, X, Y int) (entity.
 	targetCell.Figure = figure
 	targetCell.Figure.SetMovable(false)
 	targetCell.Figure.SetCoords(X, Y)
-	player.BoardFigures = append(player.BoardFigures, figure)
+	m.Figures = append(m.Figures, figure)
 	m.VisualizeAll()
 	return figure, nil
 }
@@ -141,7 +142,7 @@ func (m *board) Visualize() {
 				f := m.Canvas[i][j].Figure
 				fmt.Printf(
 					visTemplate,
-					f.GetOwner(),
+					f.GetOwnerName(),
 					f.GetVisualMark(),
 					f.GetHP(),
 					f.GetMP(),

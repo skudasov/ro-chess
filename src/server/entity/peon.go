@@ -27,6 +27,7 @@ func NewPeon(opts ...func(m *figure)) *Peon {
 	p.Figure.AttackMin = 1
 	p.Figure.AttackMax = 3
 	p.Figure.Armor = 0
+	p.Figure.Initiative = 1
 	for _, o := range opts {
 		o(p.Figure)
 	}
@@ -49,6 +50,7 @@ func NewConstDmgPeon(opts ...func(m *figure)) *Peon {
 	p.Figure.AttackMin = 5
 	p.Figure.AttackMax = 5
 	p.Figure.Armor = 0
+	p.Figure.Initiative = 1
 	for _, o := range opts {
 		o(p.Figure)
 	}
@@ -109,8 +111,8 @@ func (m *Peon) GetDefence() int {
 	return m.Figure.Armor
 }
 
-// GetOwner gets unit owner
-func (m *Peon) GetOwner() string {
+// GetOwnerName gets unit owner
+func (m *Peon) GetOwnerName() string {
 	return m.Figure.Owner
 }
 
@@ -170,6 +172,11 @@ func (m *Peon) SetAlive(alive bool) {
 func (m *Peon) Clone() Figurable {
 	cloned := *m
 	return &cloned
+}
+
+// GetInitiative gets unit initiative
+func (m *Peon) GetInitiative() int {
+	return m.Figure.Initiative
 }
 
 // AddAttack adds min/max attack according to buff mechanics

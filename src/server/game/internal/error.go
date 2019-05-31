@@ -48,18 +48,6 @@ func (e *errGameFigureNotMovable) Error() string {
 	return e.message
 }
 
-type errGameNotYourTurn struct {
-	message string
-}
-
-func newErrGameNotYourTurn() *errGameNotYourTurn {
-	return &errGameNotYourTurn{"not your turn"}
-}
-
-func (e *errGameNotYourTurn) Error() string {
-	return e.message
-}
-
 type errFigureMoveOutOfStartZone struct {
 	message string
 }
