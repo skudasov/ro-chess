@@ -4,8 +4,8 @@ import (
 	"github.com/name5566/leaf/log"
 )
 
-// visualize board and pool data
-func (m *board) VisualizeAll() {
+// visualize Board and pool data
+func (m *Board) VisualizeAll() {
 	m.Visualize()
 	for t, p := range m.Players {
 		log.Debug("%s pool visualization", t)

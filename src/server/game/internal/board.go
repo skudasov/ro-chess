@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/f4hrenh9it/ro-chess/src/server/conf"
 	"github.com/f4hrenh9it/ro-chess/src/server/entity"
+	"github.com/f4hrenh9it/ro-chess/src/server/skills"
 	"github.com/name5566/leaf/log"
 	"math/rand"
 	"time"
@@ -11,12 +12,28 @@ import (
 
 // no mutexes is needed, read leaf docs about handler goroutines
 // e.g. read func (c *LinearContext) Go(f func(), cb func())
-var bs = make(map[string]*board)
+
+// BS represents all boards, every Board is a game
+var BS = make(map[string]*Board)
+
+// All skills mechanics goes here
+type SkillLibrary map[string]skills.SkillFunc
+
+// SL global skill library to learn from
+var SL = SkillLibrary{
+	"fireball": func(boardName string, fromX int, fromY int, toX int, toY int) {
+		log.Debug("Bs here: %s", BS)
+		fromFigure := BS[boardName].Canvas[fromY][fromX].Figure
+		toFigure := BS[boardName].Canvas[toY][toX].Figure
+		log.Debug("interacting figures: %s -> %s", fromFigure.GetName(), toFigure.GetName())
+		log.Debug("casting %s: %d, %d -> %d, %d", "fireball", fromX, fromY, toX, toY)
+	},
+}
 
 var visTemplate = "[ %2s %2s %2d %2d %5s %2d ]"
 
-func createBoard(boardName string, players map[string]*player, xSize, ySize int) (*board, string) {
-	log.Debug("creating board %s", boardName)
+func createBoard(boardName string, players map[string]*player, xSize, ySize int) (*Board, string) {
+	log.Debug("creating Board %s", boardName)
 	c := make([][]*cell, ySize)
 	for i := range c {
 		c[i] = make([]*cell, xSize)
@@ -31,7 +48,7 @@ func createBoard(boardName string, players map[string]*player, xSize, ySize int)
 		ft = firstTurn(players)
 	}
 
-	b := &board{
+	b := &Board{
 		Players:  players,
 		Canvas:   c,
 		TurnEnds: make(map[string]bool),
@@ -40,9 +57,9 @@ func createBoard(boardName string, players map[string]*player, xSize, ySize int)
 	for _, p := range players {
 		p.Board = b
 	}
-	bs[boardName] = b
-	log.Debug("board created\n")
-	return bs[boardName], ft
+	BS[boardName] = b
+	log.Debug("Board created\n")
+	return BS[boardName], ft
 }
 
 func firstTurn(players map[string]*player) string {
@@ -54,7 +71,7 @@ func firstTurn(players map[string]*player) string {
 	return s[rand.Intn(len(s))]
 }
 
-func (m *board) SetActive(X, Y int, status bool) error {
+func (m *Board) SetActive(X, Y int, status bool) error {
 	if m.Canvas[Y][X].Figure == nil {
 		return newErrGameNoFigureInCell()
 	}
@@ -62,7 +79,7 @@ func (m *board) SetActive(X, Y int, status bool) error {
 	return nil
 }
 
-func (m *board) CreateStartZones() {
+func (m *Board) CreateStartZones() {
 	log.Debug("creating start zones")
 	for i := 0; i < conf.Server.BoardSizeX; i++ {
 		m.ZoneStartTopY = append(m.ZoneStartTopY, i)
@@ -82,7 +99,7 @@ func (m *board) CreateStartZones() {
 	log.Debug("bottom zone x: %d\n", m.ZoneStartBottomY)
 }
 
-func (m *board) CheckStartZone(x, y int, side side) bool {
+func (m *Board) CheckStartZone(x, y int, side side) bool {
 	log.Debug("x, y = %d, %d", x, y)
 	if side == top {
 		log.Debug("top")
@@ -106,7 +123,7 @@ func (m *board) CheckStartZone(x, y int, side side) bool {
 	return false
 }
 
-func (m *board) MoveFromPool(pToken string, side side, poolX, X, Y int) (entity.Figurable, error) {
+func (m *Board) MoveFromPool(pToken string, side side, poolX, X, Y int) (entity.Figurable, error) {
 	player := m.Players[pToken]
 	figure := player.FigurePool.Get(poolX)
 	if !m.CheckStartZone(X, Y, side) {
@@ -134,8 +151,8 @@ func (m *board) MoveFromPool(pToken string, side side, poolX, X, Y int) (entity.
 	return figure, nil
 }
 
-func (m *board) Visualize() {
-	log.Debug("board visualization")
+func (m *Board) Visualize() {
+	log.Debug("Board visualization")
 	for i := range m.Canvas {
 		for j := range m.Canvas[i] {
 			if m.Canvas[i][j].Figure != nil {
@@ -157,7 +174,7 @@ func (m *board) Visualize() {
 	}
 }
 
-func (m *board) Broadcast(message interface{}) {
+func (m *Board) Broadcast(message interface{}) {
 	for _, p := range m.Players {
 		p.Agent.WriteMsg(message)
 	}

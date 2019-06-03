@@ -7,7 +7,6 @@ import (
 	"github.com/name5566/leaf/gate"
 	"github.com/name5566/leaf/log"
 	"reflect"
-	"sync"
 )
 
 type registering struct {
@@ -16,7 +15,6 @@ type registering struct {
 	Agent gate.Agent
 }
 
-var mu *sync.Mutex
 var registeringQueue = make([]*registering, 0)
 
 func handler(m interface{}, h interface{}) {
@@ -28,6 +26,7 @@ func init() {
 	handler(&msg.Disconnect{}, handleDisconnect)
 	handler(&msg.EndTurn{}, handleEndTurn)
 	handler(&msg.MoveFigure{}, handleMoveFromPool)
+	handler(&msg.CastSkill{}, handleCastSkill)
 	handler(&msg.ActivateFigure{}, handleActivateFigure)
 }
 
@@ -41,7 +40,7 @@ func handleDisconnect(args []interface{}) {
 			registeringQueue = append(registeringQueue[:i], registeringQueue[i+1:]...)
 		}
 	}
-	board := bs[m.Board]
+	board := BS[m.Board]
 
 	if board == nil {
 		a.WriteMsg(&msg.Disconnect{m.Token, "abc", "ok"})
@@ -54,10 +53,10 @@ func handleDisconnect(args []interface{}) {
 			a.WriteMsg(&msg.Disconnect{m.Token, "abc", "ok"})
 		}
 	}
-	log.Debug("board players left: %d", len(board.Players))
+	log.Debug("Board players left: %d", len(board.Players))
 	if len(board.Players) == 0 {
-		log.Debug("deleting board %s", m.Board)
-		delete(bs, m.Board)
+		log.Debug("deleting Board %s", m.Board)
+		delete(BS, m.Board)
 	}
 	for _, r := range registeringQueue {
 		log.Debug("queue after disconnect: token: %s, name: %s", r.Token, r.Name)
@@ -113,12 +112,12 @@ func handleJoin(args []interface{}) {
 func handleMoveFromPool(args []interface{}) {
 	m := args[0].(*msg.MoveFigure)
 	a := args[1].(gate.Agent)
-	log.Debug("move msg: %v", m.Board)
-	if _, ok := bs[m.Board]; !ok {
+	log.Debug("move msg")
+	if _, ok := BS[m.Board]; !ok {
 		a.WriteMsg(&msg.GameError{newErrGameNoBoard().Error()})
 		return
 	}
-	board := bs[m.Board]
+	board := BS[m.Board]
 	player := board.Players[m.Token]
 
 	updatedFigures := make([]entity.Figurable, 0)
@@ -150,12 +149,12 @@ func handleMoveFromPool(args []interface{}) {
 func handleEndTurn(args []interface{}) {
 	m := args[0].(*msg.EndTurn)
 	a := args[1].(gate.Agent)
-	log.Debug("end turn msg: %v", m.Board)
-	if _, ok := bs[m.Board]; !ok {
+	log.Debug("end turn msg")
+	if _, ok := BS[m.Board]; !ok {
 		a.WriteMsg(&msg.GameError{newErrGameNoBoard().Error()})
 		return
 	}
-	board := bs[m.Board]
+	board := BS[m.Board]
 	// process turn mechanics here
 	log.Debug("turn ended by %s", m.Token)
 	board.TurnEnds[m.Token] = true
@@ -182,15 +181,29 @@ func handleEndTurn(args []interface{}) {
 	board.TurnEnds = make(map[string]bool)
 }
 
-func handleActivateFigure(args []interface{}) {
-	m := args[0].(*msg.ActivateFigure)
+func handleCastSkill(args []interface{}) {
+	m := args[0].(*msg.CastSkill)
 	a := args[1].(gate.Agent)
-	log.Debug("figure activate msg: %v", m.Board)
-	if _, ok := bs[m.Board]; !ok {
+	log.Debug("cast skill msg")
+	if _, ok := BS[m.Board]; !ok {
 		a.WriteMsg(&msg.GameError{newErrGameNoBoard().Error()})
 		return
 	}
-	board := bs[m.Board]
+	board := BS[m.Board]
+	fromUnit := board.Canvas[m.FromY][m.FromX]
+	fromUnit.Figure.LearnSkill("fireball", SL["fireball"])
+	fromUnit.Figure.AddSkillToRotation(m.Board, m.Name, m.FromX, m.FromY, m.ToX, m.ToY)
+}
+
+func handleActivateFigure(args []interface{}) {
+	m := args[0].(*msg.ActivateFigure)
+	a := args[1].(gate.Agent)
+	log.Debug("figure activate msg")
+	if _, ok := BS[m.Board]; !ok {
+		a.WriteMsg(&msg.GameError{newErrGameNoBoard().Error()})
+		return
+	}
+	board := BS[m.Board]
 	// if it's not a squad limit amount of moving figures so you cannot get all area revealed
 	// no one wants to die alone, without honor!
 	err := board.SetActive(m.X, m.Y, m.Active)

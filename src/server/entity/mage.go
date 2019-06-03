@@ -2,21 +2,24 @@ package entity
 
 import (
 	"fmt"
+	"github.com/f4hrenh9it/ro-chess/src/server/skills"
+	"github.com/name5566/leaf/log"
 	"math/rand"
 	"time"
 )
 
-// Grunt unit
-type Grunt struct {
-	Figure *figure
+// Mage unit
+type Mage struct {
+	Figure   *figure
+	SkillSet *skills.SkillSet
 }
 
-// NewGrunt creates new grunt unit
-func NewGrunt(opts ...func(m *figure)) *Grunt {
-	g := &Grunt{Figure: &figure{}}
-	g.Figure.Type = "grunt"
-	g.Figure.Name = "Grunt"
-	g.Figure.VisualMark = "G"
+// NewMage creates new grunt unit
+func NewMage(opts ...func(m *figure)) *Mage {
+	g := &Mage{Figure: &figure{}}
+	g.Figure.Type = "mage"
+	g.Figure.Name = "Mage"
+	g.Figure.VisualMark = "M"
 	g.Figure.Movable = true
 	g.Figure.Active = false
 	g.Figure.PrevX = 0
@@ -33,8 +36,48 @@ func NewGrunt(opts ...func(m *figure)) *Grunt {
 	return g
 }
 
+func (m *Mage) GetRotation() []*skills.AppliedSkill {
+	return m.SkillSet.Rotation
+}
+
+func (m *Mage) AddSkillToRotation(boardName string, skillName string, fromX int, fromY int, toX int, toY int) {
+	log.Debug("adding skill to rotation: %s: %d, %d -> %d, %d", skillName, fromX, fromY, toX, toY)
+	m.SkillSet.Rotation = append(m.SkillSet.Rotation, &skills.AppliedSkill{
+		boardName,
+		1,
+		fromX,
+		fromY,
+		toX,
+		toY,
+		skillName,
+	},
+	)
+}
+
+func (m *Mage) GetSkillSet() *skills.SkillSet {
+	return m.SkillSet
+}
+
+func (m *Mage) SetSkillSet(ss *skills.SkillSet) {
+	m.SkillSet = ss
+}
+
+func (m *Mage) LearnSkill(name string, skill skills.SkillFunc) {
+	m.SkillSet.SkillBook[name] = skill
+}
+
+func (m *Mage) ApplySkills() {
+	for _, app := range m.SkillSet.Rotation {
+		if _, ok := m.SkillSet.SkillBook[app.Name]; !ok {
+			log.Debug("no such skill in the book: %s", app.Name)
+			continue
+		}
+		m.SkillSet.SkillBook[app.Name](app.Board, app.FromX, app.FromY, app.ToX, app.ToY)
+	}
+}
+
 // PerformAttack calculates unit dmg
-func (m *Grunt) PerformAttack() int {
+func (m *Mage) PerformAttack() int {
 	rand.Seed(time.Now().UnixNano())
 	if m.Figure.AttackMax == m.Figure.AttackMin {
 		return m.Figure.AttackMax
@@ -43,109 +86,109 @@ func (m *Grunt) PerformAttack() int {
 }
 
 // GetName gets unit name
-func (m *Grunt) GetName() string {
+func (m *Mage) GetName() string {
 	return m.Figure.Name
 }
 
 // GetVisualMark gets mark for visualization
-func (m *Grunt) GetVisualMark() string {
+func (m *Mage) GetVisualMark() string {
 	return m.Figure.VisualMark
 }
 
 // SetHP sets unit hp
-func (m *Grunt) SetHP(hp int) {
+func (m *Mage) SetHP(hp int) {
 	m.Figure.HP = hp
 }
 
 // GetHP gets unit hp
-func (m *Grunt) GetHP() int {
+func (m *Mage) GetHP() int {
 	return m.Figure.HP
 }
 
 // SetMP sets unit mp
-func (m *Grunt) SetMP(mp int) {
+func (m *Mage) SetMP(mp int) {
 	m.Figure.MP = mp
 }
 
 // GetMP gets unit mp
-func (m *Grunt) GetMP() int {
+func (m *Mage) GetMP() int {
 	return m.Figure.MP
 }
 
 // GetAttack gets unit min-max attack
-func (m *Grunt) GetAttack() (int, int) {
+func (m *Mage) GetAttack() (int, int) {
 	return m.Figure.AttackMin, m.Figure.AttackMax
 }
 
 // GetAttackStr gets unit min-max attack for visualization
-func (m *Grunt) GetAttackStr() string {
+func (m *Mage) GetAttackStr() string {
 	return fmt.Sprintf("%d-%d", m.Figure.AttackMin, m.Figure.AttackMax)
 }
 
 // GetDefence gets unit defences
-func (m *Grunt) GetDefence() int {
+func (m *Mage) GetDefence() int {
 	return m.Figure.Armor
 }
 
 // GetOwnerName gets unit owner
-func (m *Grunt) GetOwnerName() string {
+func (m *Mage) GetOwnerName() string {
 	return m.Figure.Owner
 }
 
 // GetMovable gets unit movable flag
-func (m *Grunt) GetMovable() bool {
+func (m *Mage) GetMovable() bool {
 	return m.Figure.Movable
 }
 
 // SetMovable sets unit movable flag
-func (m *Grunt) SetMovable(movable bool) {
+func (m *Mage) SetMovable(movable bool) {
 	m.Figure.Movable = movable
 }
 
 // Activate activates unit making it walk forward for one cell
-func (m *Grunt) Activate(walking bool) {
+func (m *Mage) Activate(walking bool) {
 	m.Figure.Active = walking
 }
 
 // GetActive gets active flag
-func (m *Grunt) GetActive() bool {
+func (m *Mage) GetActive() bool {
 	return m.Figure.Active
 }
 
 // SetCoords sets unit x,y coords
-func (m *Grunt) SetCoords(X, Y int) {
+func (m *Mage) SetCoords(X, Y int) {
 	m.Figure.X = X
 	m.Figure.Y = Y
 }
 
 // GetCoords gets unit x,y coords
-func (m *Grunt) GetCoords() (int, int) {
+func (m *Mage) GetCoords() (int, int) {
 	return m.Figure.X, m.Figure.Y
 }
 
 // SetPrevCoords sets previous turn unit coords, needed for front-end to delete figure
-func (m *Grunt) SetPrevCoords(X, Y int) {
+func (m *Mage) SetPrevCoords(X, Y int) {
 	m.Figure.PrevX = X
 	m.Figure.PrevY = Y
 }
 
 // GetPrevCoords gets previous turn unit coords
-func (m *Grunt) GetPrevCoords() (int, int) {
+func (m *Mage) GetPrevCoords() (int, int) {
 	return m.Figure.PrevX, m.Figure.PrevY
 }
 
 // GetAlive gets unit alive flag
-func (m *Grunt) GetAlive() bool {
+func (m *Mage) GetAlive() bool {
 	return m.Figure.Alive
 }
 
 // SetAlive sets unit alive flag
-func (m *Grunt) SetAlive(alive bool) {
+func (m *Mage) SetAlive(alive bool) {
 	m.Figure.Alive = alive
 }
 
 // Clone copies unit
-func (m *Grunt) Clone() Figurable {
+func (m *Mage) Clone() Figurable {
 	figure := *m.Figure
 	cloned := *m
 	cloned.Figure = &figure
@@ -153,17 +196,17 @@ func (m *Grunt) Clone() Figurable {
 }
 
 // GetInitiative gets unit initiative
-func (m *Grunt) GetInitiative() int {
+func (m *Mage) GetInitiative() int {
 	return m.Figure.Initiative
 }
 
 // AddAttack adds min/max attack according to buff mechanics
-func (m *Grunt) AddAttack(minAtk, maxAtk int) {
+func (m *Mage) AddAttack(minAtk, maxAtk int) {
 	m.Figure.AttackMin += minAtk
 	m.Figure.AttackMax += maxAtk
 }
 
 // AddDefense adds defense accorting to buff mechanics
-func (m *Grunt) AddDefense(def int) {
+func (m *Mage) AddDefense(def int) {
 	m.Figure.Armor += def
 }

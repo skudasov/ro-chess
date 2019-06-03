@@ -123,10 +123,10 @@ func (m *player) applyCombo() ([]entity.Figurable, error) {
 func (m *player) buffByFigureType(f entity.Figurable, comboType comboType) {
 	x, y := f.GetCoords()
 	switch {
-	case f.GetName() == "Grunt" && comboType == attack3Combo:
+	case f.GetName() == "Mage" && comboType == attack3Combo:
 		log.Debug("%s on %d, %d receives minAtk: %d, maxAtk: %d", f.GetName(), x, y, 1, 3)
 		f.AddAttack(1, 3)
-	case f.GetName() == "Grunt" && comboType == defense3Combo:
+	case f.GetName() == "Mage" && comboType == defense3Combo:
 		log.Debug("%s on %d, %d receives armor: %d", f.GetName(), x, y, 1)
 		f.AddDefense(1)
 	}

@@ -85,7 +85,7 @@ func TestBoardSuite(t *testing.T) {
 		p2UpdMsg := cUpdateBatch{
 			msg.UpdateBatch{
 				Figures: []e.Figurable{
-					e.NewPeon(
+					e.NewWarrior(
 						e.OptOwner("p2"),
 						e.OptMovable(false),
 						e.OptX(0),
@@ -111,7 +111,7 @@ func TestBoardSuite(t *testing.T) {
 		updMsg := cUpdateBatch{
 			msg.UpdateBatch{
 				Figures: []e.Figurable{
-					e.NewGrunt(
+					e.NewMage(
 						e.OptOwner("p2"),
 						e.OptMovable(false),
 						e.OptX(0),
@@ -119,7 +119,7 @@ func TestBoardSuite(t *testing.T) {
 						e.OptAttackMin(8),
 						e.OptAttackMax(13),
 					),
-					e.NewGrunt(
+					e.NewMage(
 						e.OptOwner("p2"),
 						e.OptMovable(false),
 						e.OptX(0),
@@ -127,7 +127,7 @@ func TestBoardSuite(t *testing.T) {
 						e.OptAttackMin(8),
 						e.OptAttackMax(13),
 					),
-					e.NewGrunt(
+					e.NewMage(
 						e.OptOwner("p2"),
 						e.OptMovable(false),
 						e.OptX(0),
@@ -153,21 +153,21 @@ func TestBoardSuite(t *testing.T) {
 		updMsg := cUpdateBatch{
 			msg.UpdateBatch{
 				Figures: []e.Figurable{
-					e.NewGrunt(
+					e.NewMage(
 						e.OptOwner("p2"),
 						e.OptMovable(false),
 						e.OptX(0),
 						e.OptY(14),
 						e.OptDefence(2),
 					),
-					e.NewGrunt(
+					e.NewMage(
 						e.OptOwner("p2"),
 						e.OptMovable(false),
 						e.OptX(1),
 						e.OptY(14),
 						e.OptDefence(2),
 					),
-					e.NewGrunt(
+					e.NewMage(
 						e.OptOwner("p2"),
 						e.OptMovable(false),
 						e.OptX(2),
@@ -265,7 +265,7 @@ func TestBoardSuite(t *testing.T) {
 		peonUpdateMsg := cUpdateBatch{
 			msg.UpdateBatch{
 				Figures: []e.Figurable{
-					e.NewPeon(
+					e.NewWarrior(
 						e.OptOwner("p2"),
 						e.OptMovable(false),
 						e.OptActive(true),
@@ -293,7 +293,7 @@ func TestBoardSuite(t *testing.T) {
 			msg.UpdateBatch{
 				Players: []e.Player{{"p1", 97, 0}},
 				Figures: []e.Figurable{
-					e.NewPeon(
+					e.NewWarrior(
 						e.OptOwner("p2"),
 						e.OptMovable(false),
 						e.OptAlive(false),
@@ -323,7 +323,7 @@ func TestBoardSuite(t *testing.T) {
 			msg.UpdateBatch{
 				Players: []e.Player{{"p2", 97, 0}},
 				Figures: []e.Figurable{
-					e.NewPeon(
+					e.NewWarrior(
 						e.OptOwner("p1"),
 						e.OptMovable(false),
 						e.OptActive(true),
@@ -390,7 +390,7 @@ func TestBoardSuite(t *testing.T) {
 					{X: 0, Y: 1, Dmg: -5, Crit: false},
 				},
 				Figures: []e.Figurable{
-					e.NewConstDmgPeon(
+					e.NewConstDmgWarrior(
 						e.OptOwner("p1"),
 						e.OptMovable(false),
 						e.OptActive(true),
@@ -401,7 +401,7 @@ func TestBoardSuite(t *testing.T) {
 						e.OptY(1),
 						e.OptHP(0),
 					),
-					e.NewConstDmgPeon(
+					e.NewConstDmgWarrior(
 						e.OptOwner("p2"),
 						e.OptMovable(false),
 						e.OptActive(true),
@@ -438,7 +438,7 @@ func TestBoardSuite(t *testing.T) {
 					{X: 0, Y: 2, Dmg: -5, Crit: false},
 				},
 				Figures: []e.Figurable{
-					e.NewConstDmgPeon(
+					e.NewConstDmgWarrior(
 						e.OptOwner("p2"),
 						e.OptMovable(false),
 						e.OptActive(true),
@@ -449,7 +449,7 @@ func TestBoardSuite(t *testing.T) {
 						e.OptY(2),
 						e.OptHP(0),
 					),
-					e.NewConstDmgPeon(
+					e.NewConstDmgWarrior(
 						e.OptOwner("p1"),
 						e.OptMovable(false),
 						e.OptActive(true),
@@ -464,5 +464,19 @@ func TestBoardSuite(t *testing.T) {
 		}
 		assert.Equal(t, updMsg, upd1)
 		assert.Equal(t, updMsg, upd2)
+	})
+
+	t.Run("TestSkillApplication", func(t *testing.T) {
+		twoUnitsCombatBoard()
+		g := newBoardGame(t, board)
+		defer g.end()
+
+		g.p1MovesFromPool(0, 0, 1)
+		g.p1ActivatesFigure(0, 1)
+		g.p2MovesFromPool(0, 0, 2)
+		g.p2ActivatesFigure(0, 2)
+		skillMsg := cCastSkill{msg.CastSkill{"p2", board, 0, 1, 0, 2, "fireball"}}
+		g.P2.send(skillMsg)
+		g.turnEnds()
 	})
 }

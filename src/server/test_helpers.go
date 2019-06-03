@@ -51,10 +51,6 @@ type cYourTurn struct {
 	YourTurn msg.YourTurn
 }
 
-type cTurnEnded struct {
-	TurnEnded msg.TurnEnded
-}
-
 type cActivateFigure struct {
 	ActivateFigure msg.ActivateFigure
 }
@@ -69,6 +65,10 @@ type cYouWin struct {
 
 type cYouLose struct {
 	YouLose msg.YouLose
+}
+
+type cCastSkill struct {
+	CastSkill msg.CastSkill
 }
 
 func oneUnitBoard() {
@@ -159,12 +159,6 @@ func unpack(resBytes []byte, reply string) interface{} {
 		return res
 	case "YourTurn":
 		var res cYourTurn
-		if err := json.Unmarshal(resBytes, &res); err != nil {
-			log.Fatal(err)
-		}
-		return res
-	case "TurnEnded":
-		var res cTurnEnded
 		if err := json.Unmarshal(resBytes, &res); err != nil {
 			log.Fatal(err)
 		}

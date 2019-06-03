@@ -2,6 +2,7 @@ package msg
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/f4hrenh9it/ro-chess/src/server/entity"
 	ljson "github.com/name5566/leaf/network/json"
 	"github.com/pkg/errors"
@@ -18,8 +19,8 @@ func init() {
 	Processor.Register(&YouLose{})
 	Processor.Register(&TurnFigurePool{})
 	Processor.Register(&EndTurn{})
-	Processor.Register(&TurnEnded{})
 	Processor.Register(&YourTurn{})
+	Processor.Register(&CastSkill{})
 	Processor.Register(&ActivateFigure{})
 	Processor.Register(&FigureUpdate{})
 	Processor.Register(&UpdateBatch{})
@@ -79,9 +80,6 @@ type EndTurn struct {
 // YourTurn msg
 type YourTurn struct{}
 
-// TurnEnded msg
-type TurnEnded struct{}
-
 // ActivateFigure msg
 type ActivateFigure struct {
 	Token  string
@@ -101,6 +99,17 @@ type UpdateBatch struct {
 	Players   []entity.Player      `json:"Players,omitempty"`
 	CombatLog []entity.CombatEvent `json:"CombatLog,omitempty"`
 	Figures   []entity.Figurable   `json:"Figures,omitempty"`
+}
+
+// CastSkill msg
+type CastSkill struct {
+	Token string
+	Board string
+	FromX int
+	FromY int
+	ToX   int
+	ToY   int
+	Name  string
 }
 
 // YouWin msg
@@ -131,20 +140,20 @@ func (ce *TurnFigurePool) UnmarshalJSON(b []byte) error {
 		}
 
 		switch m["Figure"]["Type"] {
-		case "peon":
-			var p entity.Peon
+		case "warrior":
+			var p entity.Warrior
 			if err := json.Unmarshal(*rawMessage, &p); err != nil {
 				return err
 			}
 			ce.Figures[index] = &p
-		case "grunt":
-			var g entity.Grunt
+		case "mage":
+			var g entity.Mage
 			if err := json.Unmarshal(*rawMessage, &g); err != nil {
 				return err
 			}
 			ce.Figures[index] = &g
 		default:
-			return errors.New("unsupported type found when unmarshalling")
+			return errors.New(fmt.Sprintf("unsupported type found when unmarshalling: %s", m["Figure"]["Type"]))
 		}
 	}
 	return nil
@@ -189,21 +198,25 @@ func (ce *UpdateBatch) UnmarshalJSON(b []byte) error {
 			return err
 		}
 
+		//switch m["Figure"]["Skills"]["Type"] {
+		//case "fireball"
+		//}
+
 		switch m["Figure"]["Type"] {
-		case "peon":
-			var p entity.Peon
+		case "warrior":
+			var p entity.Warrior
 			if err := json.Unmarshal(*rawMessage, &p); err != nil {
 				return err
 			}
 			ce.Figures[index] = &p
-		case "grunt":
-			var g entity.Grunt
+		case "mage":
+			var g entity.Mage
 			if err := json.Unmarshal(*rawMessage, &g); err != nil {
 				return err
 			}
 			ce.Figures[index] = &g
 		default:
-			return errors.New("unsupported type found")
+			return errors.New(fmt.Sprintf("unsupported type found when unmarshalling: %s", m["Figure"]["Type"]))
 		}
 	}
 	return nil

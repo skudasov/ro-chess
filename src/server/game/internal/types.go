@@ -32,7 +32,7 @@ type player struct {
 	Opponent     *player
 	Info         string
 	Side         side
-	Board        *board
+	Board        *Board
 	HP           int
 	MP           int
 	ZoneScoreY   int
@@ -55,7 +55,7 @@ type cell struct {
 	Busy    bool
 }
 
-type board struct {
+type Board struct {
 	Winner           string
 	Turn             string
 	TurnEnds         map[string]bool

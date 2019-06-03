@@ -45,11 +45,11 @@ func (m *ConstDmgFigurePool) Visualize() {
 // Fill fills pool with units
 func (m *ConstDmgFigurePool) Fill(owner string) {
 	m.Figures = append(m.Figures,
-		e.NewConstDmgPeon(e.OptOwner(owner)),
-		e.NewConstDmgPeon(e.OptOwner(owner)),
-		e.NewConstDmgPeon(e.OptOwner(owner)),
-		e.NewConstDmgPeon(e.OptOwner(owner)),
-		e.NewConstDmgPeon(e.OptOwner(owner)),
+		e.NewConstDmgWarrior(e.OptOwner(owner)),
+		e.NewConstDmgWarrior(e.OptOwner(owner)),
+		e.NewConstDmgWarrior(e.OptOwner(owner)),
+		e.NewConstDmgWarrior(e.OptOwner(owner)),
+		e.NewConstDmgWarrior(e.OptOwner(owner)),
 	)
 }
 

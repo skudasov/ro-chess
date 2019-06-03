@@ -1,17 +1,27 @@
 package entity
 
 type figure struct {
-	Type       string
-	Name       string
+	// Type of figure for client deserialiazation by interface
+	Type string
+	// Figure Name
+	Name string
+	// Visual mark for debug
 	VisualMark string
-	Owner      string
-	Movable    bool
-	Active     bool
-	PrevX      int
-	PrevY      int
-	X          int
-	Y          int
-	Alive      bool
+	// Player who owns this figure
+	Owner string
+	// Is figure movable from pool
+	Movable bool
+	// Is figure active (making moves every turn)
+	Active bool
+	// Previous coordinates
+	PrevX int
+	PrevY int
+	// This turn coordinates
+	X int
+	Y int
+	// Is figure dead or not
+	Alive bool
+	// Initiative determines order of applying skills / making combat / moving of figure
 	Initiative int
 	HP         int
 	MP         int

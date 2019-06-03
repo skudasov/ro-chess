@@ -2,21 +2,24 @@ package entity
 
 import (
 	"fmt"
+	"github.com/f4hrenh9it/ro-chess/src/server/skills"
+	"github.com/name5566/leaf/log"
 	"math/rand"
 	"time"
 )
 
-// Peon unit
-type Peon struct {
-	Figure *figure
+// Warrior unit
+type Warrior struct {
+	Figure   *figure
+	SkillSet *skills.SkillSet
 }
 
-// NewPeon creates new peon unit
-func NewPeon(opts ...func(m *figure)) *Peon {
-	p := &Peon{Figure: &figure{}}
-	p.Figure.Type = "peon"
-	p.Figure.Name = "Peon"
-	p.Figure.VisualMark = "P"
+// NewWarrior creates new peon unit
+func NewWarrior(opts ...func(m *figure)) *Warrior {
+	p := &Warrior{Figure: &figure{}}
+	p.Figure.Type = "warrior"
+	p.Figure.Name = "Warrior"
+	p.Figure.VisualMark = "W"
 	p.Figure.Movable = true
 	p.Figure.Active = false
 	p.Figure.PrevX = 0
@@ -34,12 +37,12 @@ func NewPeon(opts ...func(m *figure)) *Peon {
 	return p
 }
 
-// NewConstDmgPeon creates new peon unit with const dps
-func NewConstDmgPeon(opts ...func(m *figure)) *Peon {
-	p := &Peon{Figure: &figure{}}
-	p.Figure.Type = "peon"
-	p.Figure.Name = "Peon"
-	p.Figure.VisualMark = "P"
+// NewConstDmgWarrior creates new peon unit with const dps
+func NewConstDmgWarrior(opts ...func(m *figure)) *Warrior {
+	p := &Warrior{Figure: &figure{}}
+	p.Figure.Type = "warrior"
+	p.Figure.Name = "Warrior"
+	p.Figure.VisualMark = "W"
 	p.Figure.Movable = true
 	p.Figure.Active = false
 	p.Figure.PrevX = 0
@@ -57,8 +60,48 @@ func NewConstDmgPeon(opts ...func(m *figure)) *Peon {
 	return p
 }
 
+func (m *Warrior) GetSkillSet() *skills.SkillSet {
+	return m.SkillSet
+}
+
+func (m *Warrior) SetSkillSet(ss *skills.SkillSet) {
+	m.SkillSet = ss
+}
+
+func (m *Warrior) GetRotation() []*skills.AppliedSkill {
+	return m.SkillSet.Rotation
+}
+
+func (m *Warrior) LearnSkill(name string, skill skills.SkillFunc) {
+	m.SkillSet.SkillBook[name] = skill
+}
+
+func (m *Warrior) AddSkillToRotation(boardName string, skillName string, fromX int, fromY int, toX int, toY int) {
+	log.Debug("adding skill to rotation: %s: %d, %d -> %d, %d", skillName, fromX, fromY, toX, toY)
+	m.SkillSet.Rotation = append(m.SkillSet.Rotation, &skills.AppliedSkill{
+		boardName,
+		1,
+		fromX,
+		fromY,
+		toX,
+		toY,
+		skillName,
+	},
+	)
+}
+
+func (m *Warrior) ApplySkills() {
+	for _, app := range m.SkillSet.Rotation {
+		if _, ok := m.SkillSet.SkillBook[app.Name]; !ok {
+			log.Debug("no such skill in the book: %s", app.Name)
+			continue
+		}
+		m.SkillSet.SkillBook[app.Name](app.Board, app.FromX, app.FromY, app.ToX, app.ToY)
+	}
+}
+
 // PerformAttack calculates unit dmg
-func (m *Peon) PerformAttack() int {
+func (m *Warrior) PerformAttack() int {
 	rand.Seed(time.Now().UnixNano())
 	if m.Figure.AttackMax == m.Figure.AttackMin {
 		return m.Figure.AttackMax
@@ -67,125 +110,125 @@ func (m *Peon) PerformAttack() int {
 }
 
 // GetName gets unit name
-func (m *Peon) GetName() string {
+func (m *Warrior) GetName() string {
 	return m.Figure.Name
 }
 
 // GetVisualMark gets mark for visualization
-func (m *Peon) GetVisualMark() string {
+func (m *Warrior) GetVisualMark() string {
 	return m.Figure.VisualMark
 }
 
 // SetHP sets unit hp
-func (m *Peon) SetHP(hp int) {
+func (m *Warrior) SetHP(hp int) {
 	m.Figure.HP = hp
 }
 
 // GetHP gets unit hp
-func (m *Peon) GetHP() int {
+func (m *Warrior) GetHP() int {
 	return m.Figure.HP
 }
 
 // SetMP sets unit mp
-func (m *Peon) SetMP(mp int) {
+func (m *Warrior) SetMP(mp int) {
 	m.Figure.MP = mp
 }
 
 // GetMP gets unit mp
-func (m *Peon) GetMP() int {
+func (m *Warrior) GetMP() int {
 	return m.Figure.MP
 }
 
 // GetAttack gets unit min-max attack
-func (m *Peon) GetAttack() (int, int) {
+func (m *Warrior) GetAttack() (int, int) {
 	return m.Figure.AttackMin, m.Figure.AttackMax
 }
 
 // GetAttackStr gets unit min-max attack for visualization
-func (m *Peon) GetAttackStr() string {
+func (m *Warrior) GetAttackStr() string {
 	return fmt.Sprintf("%d-%d", m.Figure.AttackMin, m.Figure.AttackMax)
 }
 
 // GetDefence gets unit defences
-func (m *Peon) GetDefence() int {
+func (m *Warrior) GetDefence() int {
 	return m.Figure.Armor
 }
 
 // GetOwnerName gets unit owner
-func (m *Peon) GetOwnerName() string {
+func (m *Warrior) GetOwnerName() string {
 	return m.Figure.Owner
 }
 
 // GetMovable gets unit movable flag
-func (m *Peon) GetMovable() bool {
+func (m *Warrior) GetMovable() bool {
 	return m.Figure.Movable
 }
 
 // SetMovable sets unit movable flag
-func (m *Peon) SetMovable(movable bool) {
+func (m *Warrior) SetMovable(movable bool) {
 	m.Figure.Movable = movable
 }
 
 // Activate activates unit making it walk forward for one cell
-func (m *Peon) Activate(walking bool) {
+func (m *Warrior) Activate(walking bool) {
 	m.Figure.Active = walking
 }
 
 // GetActive gets active flag
-func (m *Peon) GetActive() bool {
+func (m *Warrior) GetActive() bool {
 	return m.Figure.Active
 }
 
 // SetCoords sets unit x,y coords
-func (m *Peon) SetCoords(X, Y int) {
+func (m *Warrior) SetCoords(X, Y int) {
 	m.Figure.X = X
 	m.Figure.Y = Y
 }
 
 // GetCoords gets unit x,y coords
-func (m *Peon) GetCoords() (int, int) {
+func (m *Warrior) GetCoords() (int, int) {
 	return m.Figure.X, m.Figure.Y
 }
 
 // SetPrevCoords sets previous turn unit coords, needed for front-end to delete figure
-func (m *Peon) SetPrevCoords(X, Y int) {
+func (m *Warrior) SetPrevCoords(X, Y int) {
 	m.Figure.PrevX = X
 	m.Figure.PrevY = Y
 }
 
 // GetPrevCoords gets previous turn unit coords
-func (m *Peon) GetPrevCoords() (int, int) {
+func (m *Warrior) GetPrevCoords() (int, int) {
 	return m.Figure.PrevX, m.Figure.PrevY
 }
 
 // GetAlive gets unit alive flag
-func (m *Peon) GetAlive() bool {
+func (m *Warrior) GetAlive() bool {
 	return m.Figure.Alive
 }
 
 // SetAlive sets unit alive flag
-func (m *Peon) SetAlive(alive bool) {
+func (m *Warrior) SetAlive(alive bool) {
 	m.Figure.Alive = alive
 }
 
 // Clone copies unit
-func (m *Peon) Clone() Figurable {
+func (m *Warrior) Clone() Figurable {
 	cloned := *m
 	return &cloned
 }
 
 // GetInitiative gets unit initiative
-func (m *Peon) GetInitiative() int {
+func (m *Warrior) GetInitiative() int {
 	return m.Figure.Initiative
 }
 
 // AddAttack adds min/max attack according to buff mechanics
-func (m *Peon) AddAttack(minAtk, maxAtk int) {
+func (m *Warrior) AddAttack(minAtk, maxAtk int) {
 	m.Figure.AttackMin += minAtk
 	m.Figure.AttackMax += maxAtk
 }
 
 // AddDefense adds defense accorting to buff mechanics
-func (m *Peon) AddDefense(def int) {
+func (m *Warrior) AddDefense(def int) {
 	m.Figure.Armor += def
 }

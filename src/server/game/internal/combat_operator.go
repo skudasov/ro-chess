@@ -7,21 +7,35 @@ import (
 	"sort"
 )
 
-func (m *board) processCombat(updatedFigures *[]entity.Figurable, updatedPlayers *[]entity.Player, clog *[]entity.CombatEvent) *string {
+func (m *Board) processCombat(updatedFigures *[]entity.Figurable, updatedPlayers *[]entity.Player, clog *[]entity.CombatEvent) *string {
 	var deadPlayerName *string
 	log.Debug("combat processing started")
 	// higher initiative figures acts first
+	// first of all applying score for figures in score zone
 	sort.Sort(figuresByInitiative(m.Figures))
 	deadPlayerName = m.processScoringPhase(updatedFigures, updatedPlayers)
 	if deadPlayerName != nil {
 		return deadPlayerName
 	}
+	// all skills now processed ordered by initiative
+	m.processSkillPhase(updatedFigures, updatedPlayers, clog)
+	// all auto attack combats now processed ordered by initiative
 	m.processAttackPhase(updatedFigures, clog)
+	// all moving processed ordered by initiative
 	m.processMovePhase(updatedFigures)
 	return nil
 }
 
-func (m *board) processAttackPhase(updatedFigures *[]entity.Figurable, clog *[]entity.CombatEvent) {
+func (m *Board) processSkillPhase(updatedFigures *[]entity.Figurable, updatedPlayers *[]entity.Player, clog *[]entity.CombatEvent) {
+	log.Debug("processing skill phase")
+	for _, f := range m.Figures {
+		if f.GetSkillSet() != nil {
+			f.ApplySkills()
+		}
+	}
+}
+
+func (m *Board) processAttackPhase(updatedFigures *[]entity.Figurable, clog *[]entity.CombatEvent) {
 	log.Debug("processing attack phase")
 	for _, f := range m.Figures {
 		log.Debug("figure: %s, initiative: %d", f.GetName(), f.GetInitiative())
@@ -72,7 +86,7 @@ func (m *board) processAttackPhase(updatedFigures *[]entity.Figurable, clog *[]e
 	m.removeDeadFigures(&m.Figures)
 }
 
-func (m *board) processMovePhase(updatedFigures *[]entity.Figurable) {
+func (m *Board) processMovePhase(updatedFigures *[]entity.Figurable) {
 	log.Debug("processing move phase")
 	for _, newFigure := range m.Figures {
 		// all active figures moves 1 cell up or down, depends on player side
@@ -106,7 +120,7 @@ func (m *board) processMovePhase(updatedFigures *[]entity.Figurable) {
 	}
 }
 
-func (m *board) processScoringPhase(figures *[]entity.Figurable, players *[]entity.Player) *string {
+func (m *Board) processScoringPhase(figures *[]entity.Figurable, players *[]entity.Player) *string {
 	// if our figure comes to opponent dmg zone, deal dmg equal to attack
 	log.Debug("processing score phase")
 	for _, f := range m.Figures {
@@ -141,7 +155,7 @@ func (m *board) processScoringPhase(figures *[]entity.Figurable, players *[]enti
 	return nil
 }
 
-func (m *board) removeDeadFigures(bfs *[]entity.Figurable) {
+func (m *Board) removeDeadFigures(bfs *[]entity.Figurable) {
 	for i, bf := range *bfs {
 		if bf.GetAlive() == false {
 			*bfs = append((*bfs)[:i], (*bfs)[i+1:]...)

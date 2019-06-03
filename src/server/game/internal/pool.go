@@ -46,11 +46,11 @@ func (m *FigurePool) Visualize() {
 func (m *FigurePool) Fill(owner string) {
 	//fill it from race units pool/locker
 	m.Figures = append(m.Figures,
-		e.NewPeon(e.OptOwner(owner)),
-		e.NewGrunt(e.OptOwner(owner)),
-		e.NewPeon(e.OptOwner(owner)),
-		e.NewPeon(e.OptOwner(owner)),
-		e.NewPeon(e.OptOwner(owner)),
+		e.NewWarrior(e.OptOwner(owner)),
+		e.NewMage(e.OptOwner(owner)),
+		e.NewWarrior(e.OptOwner(owner)),
+		e.NewWarrior(e.OptOwner(owner)),
+		e.NewWarrior(e.OptOwner(owner)),
 	)
 }
 

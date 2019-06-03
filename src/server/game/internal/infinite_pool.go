@@ -5,7 +5,7 @@ import (
 	e "github.com/f4hrenh9it/ro-chess/src/server/entity"
 )
 
-// InfiniteFigurePool used for test purpose, board testing
+// InfiniteFigurePool used for test purpose, Board testing
 type InfiniteFigurePool struct {
 	PoolLvl int
 	Race    race
@@ -46,11 +46,11 @@ func (m *InfiniteFigurePool) Visualize() {
 func (m *InfiniteFigurePool) Fill(owner string) {
 	//fill it from race units pool/locker
 	m.Figures = append(m.Figures,
-		e.NewPeon(e.OptOwner(owner)),
-		e.NewGrunt(e.OptOwner(owner)),
-		e.NewPeon(e.OptOwner(owner)),
-		e.NewPeon(e.OptOwner(owner)),
-		e.NewPeon(e.OptOwner(owner)),
+		e.NewWarrior(e.OptOwner(owner)),
+		e.NewMage(e.OptOwner(owner)),
+		e.NewWarrior(e.OptOwner(owner)),
+		e.NewWarrior(e.OptOwner(owner)),
+		e.NewWarrior(e.OptOwner(owner)),
 	)
 }
 
