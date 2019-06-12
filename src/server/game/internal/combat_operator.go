@@ -7,18 +7,20 @@ import (
 	"sort"
 )
 
-func (m *Board) processCombat(updatedFigures *[]entity.Figurable, updatedPlayers *[]entity.Player, clog *[]entity.CombatEvent) *string {
-	var deadPlayerName *string
-	log.Debug("combat processing started")
+func (m *Board) processSkillUpdates(updatedFigures *[]entity.Figurable, updatedPlayers *[]entity.Player, clog *[]entity.CombatEvent) *string {
+	log.Debug("skill updates processing started")
+	return m.processSkillPhase(updatedFigures, updatedPlayers, clog)
+}
+
+func (m *Board) processCombatUpdates(updatedFigures *[]entity.Figurable, updatedPlayers *[]entity.Player, clog *[]entity.CombatEvent) *string {
+	log.Debug("combat updates processing started")
 	// higher initiative figures acts first
 	// first of all applying score for figures in score zone
 	sort.Sort(figuresByInitiative(m.Figures))
-	deadPlayerName = m.processScoringPhase(updatedFigures, updatedPlayers)
+	deadPlayerName := m.processScoringPhase(updatedFigures, updatedPlayers)
 	if deadPlayerName != nil {
 		return deadPlayerName
 	}
-	// all skills now processed ordered by initiative
-	m.processSkillPhase(updatedFigures, updatedPlayers, clog)
 	// all auto attack combats now processed ordered by initiative
 	m.processAttackPhase(updatedFigures, clog)
 	// all moving processed ordered by initiative
@@ -26,13 +28,19 @@ func (m *Board) processCombat(updatedFigures *[]entity.Figurable, updatedPlayers
 	return nil
 }
 
-func (m *Board) processSkillPhase(updatedFigures *[]entity.Figurable, updatedPlayers *[]entity.Player, clog *[]entity.CombatEvent) {
+func (m *Board) processSkillPhase(updatedFigures *[]entity.Figurable, updatedPlayers *[]entity.Player, clog *[]entity.CombatEvent) *string {
 	log.Debug("processing skill phase")
 	for _, f := range m.Figures {
 		if f.GetSkillSet() != nil {
-			f.ApplySkills()
+			f.ApplySkills(updatedFigures, updatedPlayers, clog)
 		}
 	}
+	for _, p := range m.Players {
+		if p.HP <= 0 {
+			return &p.Name
+		}
+	}
+	return nil
 }
 
 func (m *Board) processAttackPhase(updatedFigures *[]entity.Figurable, clog *[]entity.CombatEvent) {

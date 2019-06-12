@@ -90,6 +90,6 @@ For other commands see Makefile
 ### Global TODO's
 - [x] Refactor FixedTurns crutch and make multiboard connections
 - [x] Make new type inside UpdateBatch msg, combat log for front rendering
-- [ ] Test combo stacks, test them simultaneously
 - [ ] Make activation command to be applied for all units in column
+- [ ] Refactor all coordinates usage to entity.Pair
 

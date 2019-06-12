@@ -4,9 +4,9 @@ import (
 	"github.com/name5566/leaf/log"
 )
 
-// visualize Board and pool data
+// VisualizeAll Visualizes Board and pool data
 func (m *Board) VisualizeAll() {
-	m.Visualize()
+	m.visualize()
 	for t, p := range m.Players {
 		log.Debug("%s pool visualization", t)
 		p.FigurePool.Visualize()

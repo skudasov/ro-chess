@@ -2,7 +2,6 @@ package entity
 
 import (
 	"fmt"
-	"github.com/f4hrenh9it/ro-chess/src/server/skills"
 	"github.com/name5566/leaf/log"
 	"math/rand"
 	"time"
@@ -11,7 +10,7 @@ import (
 // Warrior unit
 type Warrior struct {
 	Figure   *figure
-	SkillSet *skills.SkillSet
+	SkillSet *SkillSet
 }
 
 // NewWarrior creates new peon unit
@@ -60,43 +59,49 @@ func NewConstDmgWarrior(opts ...func(m *figure)) *Warrior {
 	return p
 }
 
-func (m *Warrior) GetSkillSet() *skills.SkillSet {
+// GetSkillSet Gets skillset
+func (m *Warrior) GetSkillSet() *SkillSet {
 	return m.SkillSet
 }
 
-func (m *Warrior) SetSkillSet(ss *skills.SkillSet) {
+// SetSkillSet Sets skill set
+func (m *Warrior) SetSkillSet(ss *SkillSet) {
 	m.SkillSet = ss
 }
 
-func (m *Warrior) GetRotation() []*skills.AppliedSkill {
+// GetRotation Gets skill rotation
+func (m *Warrior) GetRotation() []*AppliedSkill {
 	return m.SkillSet.Rotation
 }
 
-func (m *Warrior) LearnSkill(name string, skill skills.SkillFunc) {
+// LearnSkill Learns skill consuming xp
+func (m *Warrior) LearnSkill(name string, skill SkillFunc) {
+	if m.SkillSet == nil {
+		m.SkillSet = NewEmptySkillSet()
+	}
 	m.SkillSet.SkillBook[name] = skill
 }
 
-func (m *Warrior) AddSkillToRotation(boardName string, skillName string, fromX int, fromY int, toX int, toY int) {
-	log.Debug("adding skill to rotation: %s: %d, %d -> %d, %d", skillName, fromX, fromY, toX, toY)
-	m.SkillSet.Rotation = append(m.SkillSet.Rotation, &skills.AppliedSkill{
+func (m *Warrior) AddSkillToRotation(boardName string, skillName string, from Pair, to Pair) {
+	log.Debug("adding skill to rotation: %s: %d, %d -> %d, %d", skillName, from.X, from.Y, to.X, to.Y)
+	m.SkillSet.Rotation = append(m.SkillSet.Rotation, &AppliedSkill{
 		boardName,
 		1,
-		fromX,
-		fromY,
-		toX,
-		toY,
+		from,
+		to,
 		skillName,
 	},
 	)
 }
 
-func (m *Warrior) ApplySkills() {
+// ApplySkills Applies skills from rotation in order, calling every skill from self skillbook
+func (m *Warrior) ApplySkills(updatedFigures *[]Figurable, updatedPlayers *[]Player, clog *[]CombatEvent) {
 	for _, app := range m.SkillSet.Rotation {
 		if _, ok := m.SkillSet.SkillBook[app.Name]; !ok {
 			log.Debug("no such skill in the book: %s", app.Name)
 			continue
 		}
-		m.SkillSet.SkillBook[app.Name](app.Board, app.FromX, app.FromY, app.ToX, app.ToY)
+		m.SkillSet.SkillBook[app.Name](app.Board, app.From, app.To, updatedFigures, updatedPlayers, clog)
 	}
 }
 
@@ -179,13 +184,13 @@ func (m *Warrior) GetActive() bool {
 	return m.Figure.Active
 }
 
-// SetCoords sets unit x,y coords
+// SetCoords sets unit X,Y coords
 func (m *Warrior) SetCoords(X, Y int) {
 	m.Figure.X = X
 	m.Figure.Y = Y
 }
 
-// GetCoords gets unit x,y coords
+// GetCoords gets unit X,Y coords
 func (m *Warrior) GetCoords() (int, int) {
 	return m.Figure.X, m.Figure.Y
 }

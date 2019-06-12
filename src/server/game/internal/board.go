@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/f4hrenh9it/ro-chess/src/server/conf"
 	"github.com/f4hrenh9it/ro-chess/src/server/entity"
-	"github.com/f4hrenh9it/ro-chess/src/server/skills"
+	"github.com/f4hrenh9it/ro-chess/src/server/msg"
 	"github.com/name5566/leaf/log"
 	"math/rand"
 	"time"
@@ -16,17 +16,22 @@ import (
 // BS represents all boards, every Board is a game
 var BS = make(map[string]*Board)
 
-// All skills mechanics goes here
-type SkillLibrary map[string]skills.SkillFunc
+// SkillLibrary All skills mechanics goes here
+type SkillLibrary map[string]entity.SkillFunc
 
 // SL global skill library to learn from
+// every skill has access to all board figures and can update figures, players, create combat log
+// If skill has *from* pair and *to* is nil - it's buff skill
+// or target of application will be found by filtering units on board (player reference required?)
+// If skill has both pairs, second pair will be target of skill or center of AOE skill
 var SL = SkillLibrary{
-	"fireball": func(boardName string, fromX int, fromY int, toX int, toY int) {
-		log.Debug("Bs here: %s", BS)
-		fromFigure := BS[boardName].Canvas[fromY][fromX].Figure
-		toFigure := BS[boardName].Canvas[toY][toX].Figure
+	"fireball": func(boardName string, from entity.Pair, to entity.Pair, uf *[]entity.Figurable, up *[]entity.Player, clog *[]entity.CombatEvent) {
+		fromFigure := BS[boardName].Canvas[from.Y][from.X].Figure
+		toFigure := BS[boardName].Canvas[to.Y][to.X].Figure
 		log.Debug("interacting figures: %s -> %s", fromFigure.GetName(), toFigure.GetName())
-		log.Debug("casting %s: %d, %d -> %d, %d", "fireball", fromX, fromY, toX, toY)
+		log.Debug("casting %s: %d, %d -> %d, %d", "fireball", from.X, from.Y, to.X, to.Y)
+		toFigure.SetHP(toFigure.GetHP() - 200)
+		*uf = append(*uf, toFigure)
 	},
 }
 
@@ -53,7 +58,7 @@ func createBoard(boardName string, players map[string]*player, xSize, ySize int)
 		Canvas:   c,
 		TurnEnds: make(map[string]bool),
 		Turn:     ft}
-	b.CreateStartZones()
+	b.createStartZones()
 	for _, p := range players {
 		p.Board = b
 	}
@@ -71,7 +76,7 @@ func firstTurn(players map[string]*player) string {
 	return s[rand.Intn(len(s))]
 }
 
-func (m *Board) SetActive(X, Y int, status bool) error {
+func (m *Board) setActive(X, Y int, status bool) error {
 	if m.Canvas[Y][X].Figure == nil {
 		return newErrGameNoFigureInCell()
 	}
@@ -79,7 +84,7 @@ func (m *Board) SetActive(X, Y int, status bool) error {
 	return nil
 }
 
-func (m *Board) CreateStartZones() {
+func (m *Board) createStartZones() {
 	log.Debug("creating start zones")
 	for i := 0; i < conf.Server.BoardSizeX; i++ {
 		m.ZoneStartTopY = append(m.ZoneStartTopY, i)
@@ -99,7 +104,7 @@ func (m *Board) CreateStartZones() {
 	log.Debug("bottom zone x: %d\n", m.ZoneStartBottomY)
 }
 
-func (m *Board) CheckStartZone(x, y int, side side) bool {
+func (m *Board) checkStartZone(x, y int, side side) bool {
 	log.Debug("x, y = %d, %d", x, y)
 	if side == top {
 		log.Debug("top")
@@ -123,10 +128,10 @@ func (m *Board) CheckStartZone(x, y int, side side) bool {
 	return false
 }
 
-func (m *Board) MoveFromPool(pToken string, side side, poolX, X, Y int) (entity.Figurable, error) {
+func (m *Board) moveFromPool(pToken string, side side, poolX, X, Y int) (entity.Figurable, error) {
 	player := m.Players[pToken]
 	figure := player.FigurePool.Get(poolX)
-	if !m.CheckStartZone(X, Y, side) {
+	if !m.checkStartZone(X, Y, side) {
 		return nil, newErrFigureMoveOutOfStartZone()
 	}
 	if figure == nil {
@@ -151,7 +156,7 @@ func (m *Board) MoveFromPool(pToken string, side side, poolX, X, Y int) (entity.
 	return figure, nil
 }
 
-func (m *Board) Visualize() {
+func (m *Board) visualize() {
 	log.Debug("Board visualization")
 	for i := range m.Canvas {
 		for j := range m.Canvas[i] {
@@ -174,8 +179,14 @@ func (m *Board) Visualize() {
 	}
 }
 
-func (m *Board) Broadcast(message interface{}) {
+func (m *Board) broadcast(message interface{}) {
 	for _, p := range m.Players {
 		p.Agent.WriteMsg(message)
 	}
+}
+
+func (m *Board) endGame(loser *string) {
+	player := m.Players[*loser]
+	player.Opponent.Agent.WriteMsg(&msg.YouWin{})
+	player.Agent.WriteMsg(&msg.YouLose{})
 }

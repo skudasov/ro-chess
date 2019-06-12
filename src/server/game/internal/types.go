@@ -55,6 +55,7 @@ type cell struct {
 	Busy    bool
 }
 
+// Board Represents game board
 type Board struct {
 	Winner           string
 	Turn             string

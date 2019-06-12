@@ -191,6 +191,8 @@ func TestBoardSuite(t *testing.T) {
 		g.P2.send(cEndTurn{msg.EndTurn{"p2", board}})
 		g.P1.send(cEndTurn{msg.EndTurn{"p1", board}})
 		g.P2.read("UpdateBatch")
+		g.P2.read("UpdateBatch")
+		g.P1.read("UpdateBatch")
 		g.P1.read("UpdateBatch")
 		yourTurn := g.P1.read("YourTurn")
 		assert.Equal(t, cYourTurn{msg.YourTurn{}}, yourTurn)
@@ -259,7 +261,7 @@ func TestBoardSuite(t *testing.T) {
 		// p2 moving
 		g.p2MovesFromPool(0, 8, 14)
 		g.p2ActivatesFigure(8, 14)
-		resp1, _ := g.turnEnds()
+		_, _, resp1, _ := g.turnEnds()
 
 		// p2 ending turn asserting updates
 		peonUpdateMsg := cUpdateBatch{
@@ -288,7 +290,7 @@ func TestBoardSuite(t *testing.T) {
 		g.p2MovesFromPool(0, 0, 1)
 		g.p2ActivatesFigure(0, 1)
 		g.turnEnds()
-		upd1, upd2 := g.turnEnds()
+		_, _, upd1, upd2 := g.turnEnds()
 		updMsg := cUpdateBatch{
 			msg.UpdateBatch{
 				Players: []e.Player{{"p1", 97, 0}},
@@ -318,7 +320,7 @@ func TestBoardSuite(t *testing.T) {
 		g.p1MovesFromPool(0, 0, 1)
 		g.p1ActivatesFigure(0, 1)
 		g.turnEnds()
-		upd1, upd2 := g.turnEnds()
+		_, _, upd1, upd2 := g.turnEnds()
 		updMsg := cUpdateBatch{
 			msg.UpdateBatch{
 				Players: []e.Player{{"p2", 97, 0}},
@@ -414,7 +416,7 @@ func TestBoardSuite(t *testing.T) {
 				},
 			},
 		}
-		upd1, upd2 := g.turnEnds()
+		_, _, upd1, upd2 := g.turnEnds()
 		assert.Equal(t, updMsg, upd1)
 		assert.Equal(t, updMsg, upd2)
 	})
@@ -429,7 +431,7 @@ func TestBoardSuite(t *testing.T) {
 		g.p1ActivatesFigure(0, 1)
 		g.p2MovesFromPool(0, 0, 2)
 		g.p2ActivatesFigure(0, 2)
-		upd1, upd2 := g.turnEnds()
+		_, _, upd1, upd2 := g.turnEnds()
 		updMsg := cUpdateBatch{
 			msg.UpdateBatch{
 				CombatLog: []e.CombatEvent{
@@ -475,7 +477,7 @@ func TestBoardSuite(t *testing.T) {
 		g.p1ActivatesFigure(0, 1)
 		g.p2MovesFromPool(0, 0, 2)
 		g.p2ActivatesFigure(0, 2)
-		skillMsg := cCastSkill{msg.CastSkill{"p2", board, 0, 1, 0, 2, "fireball"}}
+		skillMsg := cCastSkill{msg.CastSkill{"p2", board, e.Pair{0, 1}, e.Pair{0, 2}, "fireball"}}
 		g.P2.send(skillMsg)
 		g.turnEnds()
 	})

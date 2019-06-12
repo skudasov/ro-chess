@@ -7,6 +7,7 @@ import (
 	"github.com/name5566/leaf/gate"
 	"github.com/name5566/leaf/log"
 	"reflect"
+	"sort"
 )
 
 type registering struct {
@@ -91,7 +92,7 @@ func handleJoin(args []interface{}) {
 			players,
 			conf.Server.BoardSizeX, conf.Server.BoardSizeY,
 		)
-		board.Broadcast(&msg.GameStarted{turn})
+		board.broadcast(&msg.GameStarted{turn})
 		// send pool figures for the first turn
 		pName := board.Turn
 		player := board.Players[pName]
@@ -121,7 +122,7 @@ func handleMoveFromPool(args []interface{}) {
 	player := board.Players[m.Token]
 
 	updatedFigures := make([]entity.Figurable, 0)
-	f, err := board.MoveFromPool(
+	f, err := board.moveFromPool(
 		m.Token,
 		player.Side,
 		m.PoolX, m.ToX, m.ToY,
@@ -139,11 +140,11 @@ func handleMoveFromPool(args []interface{}) {
 		a.WriteMsg(&msg.GameError{err.Error()})
 	}
 	if len(updatedByCombos) != 0 {
-		board.Broadcast(&msg.UpdateBatch{nil, nil, updatedByCombos})
+		board.broadcast(&msg.UpdateBatch{nil, nil, updatedByCombos})
 		return
 	}
 	log.Debug("figures here: %s", updatedFigures)
-	board.Broadcast(&msg.UpdateBatch{nil, nil, updatedFigures})
+	board.broadcast(&msg.UpdateBatch{nil, nil, updatedFigures})
 }
 
 func handleEndTurn(args []interface{}) {
@@ -164,19 +165,30 @@ func handleEndTurn(args []interface{}) {
 	}
 
 	log.Debug("turn phase: Battle")
+	// sorting all figures by initiative
+	sort.Sort(figuresByInitiative(board.Figures))
+
 	updatedFigures := make([]entity.Figurable, 0)
 	updatedPlayers := make([]entity.Player, 0)
 	combatLogs := make([]entity.CombatEvent, 0)
-
-	deadPlayerName := board.processCombat(&updatedFigures, &updatedPlayers, &combatLogs)
+	deadPlayerName := board.processSkillUpdates(&updatedFigures, &updatedPlayers, &combatLogs)
+	board.broadcast(&msg.UpdateBatch{updatedPlayers, combatLogs, updatedFigures})
 	if deadPlayerName != nil {
-		player := board.Players[*deadPlayerName]
-		player.Opponent.Agent.WriteMsg(&msg.YouWin{})
-		player.Agent.WriteMsg(&msg.YouLose{})
+		board.endGame(deadPlayerName)
 		return
 	}
-	board.Broadcast(&msg.UpdateBatch{updatedPlayers, combatLogs, updatedFigures})
-	board.Broadcast(&msg.YourTurn{})
+
+	updatedFigures = make([]entity.Figurable, 0)
+	updatedPlayers = make([]entity.Player, 0)
+	combatLogs = make([]entity.CombatEvent, 0)
+	deadPlayerName = board.processCombatUpdates(&updatedFigures, &updatedPlayers, &combatLogs)
+	board.broadcast(&msg.UpdateBatch{updatedPlayers, combatLogs, updatedFigures})
+	if deadPlayerName != nil {
+		board.endGame(deadPlayerName)
+		return
+	}
+
+	board.broadcast(&msg.YourTurn{})
 	log.Debug("turn phase: Planning")
 	board.TurnEnds = make(map[string]bool)
 }
@@ -190,9 +202,11 @@ func handleCastSkill(args []interface{}) {
 		return
 	}
 	board := BS[m.Board]
-	fromUnit := board.Canvas[m.FromY][m.FromX]
+	fromUnit := board.Canvas[m.From.Y][m.From.X]
 	fromUnit.Figure.LearnSkill("fireball", SL["fireball"])
-	fromUnit.Figure.AddSkillToRotation(m.Board, m.Name, m.FromX, m.FromY, m.ToX, m.ToY)
+	from := entity.Pair{m.From.X, m.From.Y}
+	to := entity.Pair{m.To.X, m.To.Y}
+	fromUnit.Figure.AddSkillToRotation(m.Board, m.Name, from, to)
 }
 
 func handleActivateFigure(args []interface{}) {
@@ -206,11 +220,11 @@ func handleActivateFigure(args []interface{}) {
 	board := BS[m.Board]
 	// if it's not a squad limit amount of moving figures so you cannot get all area revealed
 	// no one wants to die alone, without honor!
-	err := board.SetActive(m.X, m.Y, m.Active)
+	err := board.setActive(m.X, m.Y, m.Active)
 	if err != nil {
 		a.WriteMsg(&msg.GameError{err.Error()})
 		return
 	}
 	log.Debug("sending activate msg")
-	board.Broadcast(m)
+	board.broadcast(m)
 }

@@ -1,7 +1,5 @@
 package entity
 
-import "github.com/f4hrenh9it/ro-chess/src/server/skills"
-
 // Figurable represents actions with figures
 type Figurable interface {
 	Clonable
@@ -12,12 +10,13 @@ type Figurable interface {
 	Visualizable
 }
 
+// SkillUsable represents actions for figures with skills
 type SkillUsable interface {
-	GetSkillSet() *skills.SkillSet
-	SetSkillSet(*skills.SkillSet)
-	ApplySkills()
-	AddSkillToRotation(string, string, int, int, int, int)
-	LearnSkill(string, skills.SkillFunc)
+	GetSkillSet() *SkillSet
+	SetSkillSet(*SkillSet)
+	ApplySkills(*[]Figurable, *[]Player, *[]CombatEvent)
+	AddSkillToRotation(string, string, Pair, Pair)
+	LearnSkill(string, SkillFunc)
 }
 
 // Visualizable represents actions with visualization of figures

@@ -1,20 +1,19 @@
-package skills
+package entity
 
 // SkillFunc skill mechanics goes here
-type SkillFunc func(string, int, int, int, int)
+type SkillFunc func(string, Pair, Pair, *[]Figurable, *[]Player, *[]CombatEvent)
 
-// Entity of skill application from one unit to another
+// AppliedSkill Entity of skill application from one unit to another
 type AppliedSkill struct {
-	// How many times skill will be applied
 	Board string
+	// How many times skill will be applied
 	Times int
-	FromX int
-	FromY int
-	ToX   int
-	ToY   int
+	From  Pair
+	To    Pair
 	Name  string
 }
 
+// SkillSet Entity of current skills figure may have
 type SkillSet struct {
 	// SKill rotation to be applied in order
 	Rotation []*AppliedSkill
@@ -23,6 +22,7 @@ type SkillSet struct {
 	SkillBook map[string]SkillFunc `json:"-"`
 }
 
+// NewEmptySkillSet Creates new empty skillset
 func NewEmptySkillSet() *SkillSet {
 	return &SkillSet{
 		Rotation:  make([]*AppliedSkill, 0),

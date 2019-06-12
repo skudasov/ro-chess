@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/f4hrenh9it/ro-chess/src/server/entity"
 	ljson "github.com/name5566/leaf/network/json"
-	"github.com/pkg/errors"
 )
 
 // Processor represents msg processor (json/pb)
@@ -105,10 +104,8 @@ type UpdateBatch struct {
 type CastSkill struct {
 	Token string
 	Board string
-	FromX int
-	FromY int
-	ToX   int
-	ToY   int
+	From  entity.Pair
+	To    entity.Pair
 	Name  string
 }
 
@@ -153,7 +150,7 @@ func (ce *TurnFigurePool) UnmarshalJSON(b []byte) error {
 			}
 			ce.Figures[index] = &g
 		default:
-			return errors.New(fmt.Sprintf("unsupported type found when unmarshalling: %s", m["Figure"]["Type"]))
+			return fmt.Errorf("unsupported type found when unmarshalling: %s", m["Figure"]["Type"])
 		}
 	}
 	return nil
@@ -216,7 +213,7 @@ func (ce *UpdateBatch) UnmarshalJSON(b []byte) error {
 			}
 			ce.Figures[index] = &g
 		default:
-			return errors.New(fmt.Sprintf("unsupported type found when unmarshalling: %s", m["Figure"]["Type"]))
+			return fmt.Errorf("unsupported type found when unmarshalling: %s", m["Figure"]["Type"])
 		}
 	}
 	return nil
