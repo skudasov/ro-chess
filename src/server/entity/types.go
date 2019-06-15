@@ -1,7 +1,7 @@
 package entity
 
-// Pair X,Y coordinates
-type Pair struct {
+// Point X,Y coordinates
+type Point struct {
 	X int
 	Y int
 }

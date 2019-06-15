@@ -204,8 +204,8 @@ func handleCastSkill(args []interface{}) {
 	board := BS[m.Board]
 	fromUnit := board.Canvas[m.From.Y][m.From.X]
 	fromUnit.Figure.LearnSkill("fireball", SL["fireball"])
-	from := entity.Pair{m.From.X, m.From.Y}
-	to := entity.Pair{m.To.X, m.To.Y}
+	from := entity.Point{m.From.X, m.From.Y}
+	to := entity.Point{m.To.X, m.To.Y}
 	fromUnit.Figure.AddSkillToRotation(m.Board, m.Name, from, to)
 }
 

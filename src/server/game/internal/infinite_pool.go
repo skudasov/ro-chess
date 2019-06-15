@@ -21,7 +21,7 @@ func NewInfiniteFigurePool(race race, poolLvl int) *InfiniteFigurePool {
 	}
 }
 
-// visualize visualizes units in pool
+// Visualize visualizes units in pool
 func (m *InfiniteFigurePool) Visualize() {
 	for i := range m.Figures {
 		if m.Figures[i] != nil {

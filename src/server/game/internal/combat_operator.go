@@ -2,17 +2,17 @@ package internal
 
 import (
 	"github.com/f4hrenh9it/ro-chess/src/server/conf"
-	"github.com/f4hrenh9it/ro-chess/src/server/entity"
+	e "github.com/f4hrenh9it/ro-chess/src/server/entity"
 	"github.com/name5566/leaf/log"
 	"sort"
 )
 
-func (m *Board) processSkillUpdates(updatedFigures *[]entity.Figurable, updatedPlayers *[]entity.Player, clog *[]entity.CombatEvent) *string {
+func (m *Board) processSkillUpdates(updatedFigures *[]e.Figurable, updatedPlayers *[]e.Player, clog *[]e.CombatEvent) *string {
 	log.Debug("skill updates processing started")
 	return m.processSkillPhase(updatedFigures, updatedPlayers, clog)
 }
 
-func (m *Board) processCombatUpdates(updatedFigures *[]entity.Figurable, updatedPlayers *[]entity.Player, clog *[]entity.CombatEvent) *string {
+func (m *Board) processCombatUpdates(updatedFigures *[]e.Figurable, updatedPlayers *[]e.Player, clog *[]e.CombatEvent) *string {
 	log.Debug("combat updates processing started")
 	// higher initiative figures acts first
 	// first of all applying score for figures in score zone
@@ -28,7 +28,7 @@ func (m *Board) processCombatUpdates(updatedFigures *[]entity.Figurable, updated
 	return nil
 }
 
-func (m *Board) processSkillPhase(updatedFigures *[]entity.Figurable, updatedPlayers *[]entity.Player, clog *[]entity.CombatEvent) *string {
+func (m *Board) processSkillPhase(updatedFigures *[]e.Figurable, updatedPlayers *[]e.Player, clog *[]e.CombatEvent) *string {
 	log.Debug("processing skill phase")
 	for _, f := range m.Figures {
 		if f.GetSkillSet() != nil {
@@ -43,7 +43,7 @@ func (m *Board) processSkillPhase(updatedFigures *[]entity.Figurable, updatedPla
 	return nil
 }
 
-func (m *Board) processAttackPhase(updatedFigures *[]entity.Figurable, clog *[]entity.CombatEvent) {
+func (m *Board) processAttackPhase(updatedFigures *[]e.Figurable, clog *[]e.CombatEvent) {
 	log.Debug("processing attack phase")
 	for _, f := range m.Figures {
 		log.Debug("figure: %s, initiative: %d", f.GetName(), f.GetInitiative())
@@ -69,7 +69,7 @@ func (m *Board) processAttackPhase(updatedFigures *[]entity.Figurable, clog *[]e
 				aDmg := attacker.PerformAttack()
 				log.Debug("attacker dmg: %d", aDmg)
 				defender.SetHP(defender.GetHP() - aDmg)
-				*clog = append(*clog, entity.CombatEvent{defX, defY, -aDmg, false})
+				*clog = append(*clog, e.CombatEvent{nil, &e.Point{defX, defY}, -aDmg, ""})
 				if defender.GetHP() <= 0 {
 					defender.SetAlive(false)
 					m.Canvas[defY][defX].Figure = nil
@@ -80,7 +80,7 @@ func (m *Board) processAttackPhase(updatedFigures *[]entity.Figurable, clog *[]e
 				dDmg := defender.PerformAttack()
 				log.Debug("defender dmg: %d", dDmg)
 				attacker.SetHP(attacker.GetHP() - dDmg)
-				*clog = append(*clog, entity.CombatEvent{atkX, atkY, -dDmg, false})
+				*clog = append(*clog, e.CombatEvent{nil, &e.Point{atkX, atkY}, -dDmg, ""})
 				if attacker.GetHP() <= 0 {
 					attacker.SetAlive(false)
 					m.Canvas[atkY][atkX].Figure = nil
@@ -94,7 +94,7 @@ func (m *Board) processAttackPhase(updatedFigures *[]entity.Figurable, clog *[]e
 	m.removeDeadFigures(&m.Figures)
 }
 
-func (m *Board) processMovePhase(updatedFigures *[]entity.Figurable) {
+func (m *Board) processMovePhase(updatedFigures *[]e.Figurable) {
 	log.Debug("processing move phase")
 	for _, newFigure := range m.Figures {
 		// all active figures moves 1 cell up or down, depends on player side
@@ -128,7 +128,7 @@ func (m *Board) processMovePhase(updatedFigures *[]entity.Figurable) {
 	}
 }
 
-func (m *Board) processScoringPhase(figures *[]entity.Figurable, players *[]entity.Player) *string {
+func (m *Board) processScoringPhase(figures *[]e.Figurable, players *[]e.Player) *string {
 	// if our figure comes to opponent dmg zone, deal dmg equal to attack
 	log.Debug("processing score phase")
 	for _, f := range m.Figures {
@@ -143,7 +143,7 @@ func (m *Board) processScoringPhase(figures *[]entity.Figurable, players *[]enti
 			f.SetAlive(false)
 			m.Canvas[y][x] = nil
 			player.Opponent.HP = player.Opponent.HP - magicNumber
-			*players = append(*players, entity.Player{
+			*players = append(*players, e.Player{
 				Name: player.Opponent.Name,
 				HP:   player.Opponent.HP,
 				MP:   player.Opponent.MP,
@@ -163,7 +163,7 @@ func (m *Board) processScoringPhase(figures *[]entity.Figurable, players *[]enti
 	return nil
 }
 
-func (m *Board) removeDeadFigures(bfs *[]entity.Figurable) {
+func (m *Board) removeDeadFigures(bfs *[]e.Figurable) {
 	for i, bf := range *bfs {
 		if bf.GetAlive() == false {
 			*bfs = append((*bfs)[:i], (*bfs)[i+1:]...)

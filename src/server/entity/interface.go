@@ -15,7 +15,7 @@ type SkillUsable interface {
 	GetSkillSet() *SkillSet
 	SetSkillSet(*SkillSet)
 	ApplySkills(*[]Figurable, *[]Player, *[]CombatEvent)
-	AddSkillToRotation(string, string, Pair, Pair)
+	AddSkillToRotation(string, string, Point, Point)
 	LearnSkill(string, SkillFunc)
 }
 

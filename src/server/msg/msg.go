@@ -104,8 +104,8 @@ type UpdateBatch struct {
 type CastSkill struct {
 	Token string
 	Board string
-	From  entity.Pair
-	To    entity.Pair
+	From  entity.Point
+	To    entity.Point
 	Name  string
 }
 
@@ -129,14 +129,14 @@ func (ce *TurnFigurePool) UnmarshalJSON(b []byte) error {
 	}
 	ce.Figures = make([]entity.Figurable, len(rawMsgsFigures))
 
-	var m map[string]map[string]interface{}
+	var m map[string]interface{}
 	for index, rawMessage := range rawMsgsFigures {
 		err = json.Unmarshal(*rawMessage, &m)
 		if err != nil {
 			return err
 		}
 
-		switch m["Figure"]["Type"] {
+		switch m["Type"] {
 		case "warrior":
 			var p entity.Warrior
 			if err := json.Unmarshal(*rawMessage, &p); err != nil {
@@ -150,7 +150,7 @@ func (ce *TurnFigurePool) UnmarshalJSON(b []byte) error {
 			}
 			ce.Figures[index] = &g
 		default:
-			return fmt.Errorf("unsupported type found when unmarshalling: %s", m["Figure"]["Type"])
+			return fmt.Errorf("unsupported type found when unmarshalling: %s", m["Type"])
 		}
 	}
 	return nil
@@ -188,18 +188,16 @@ func (ce *UpdateBatch) UnmarshalJSON(b []byte) error {
 		ce.CombatLog = combatLog
 	}
 
-	var m map[string]map[string]interface{}
+	var m map[string]interface{}
 	for index, rawMessage := range figures {
 		err = json.Unmarshal(*rawMessage, &m)
 		if err != nil {
 			return err
 		}
 
-		//switch m["Figure"]["Skills"]["Type"] {
-		//case "fireball"
-		//}
+		fmt.Printf("map here: %s\n", m)
 
-		switch m["Figure"]["Type"] {
+		switch m["Type"] {
 		case "warrior":
 			var p entity.Warrior
 			if err := json.Unmarshal(*rawMessage, &p); err != nil {
@@ -213,7 +211,7 @@ func (ce *UpdateBatch) UnmarshalJSON(b []byte) error {
 			}
 			ce.Figures[index] = &g
 		default:
-			return fmt.Errorf("unsupported type found when unmarshalling: %s", m["Figure"]["Type"])
+			return fmt.Errorf("unsupported type found when unmarshalling: %s", m["Type"])
 		}
 	}
 	return nil

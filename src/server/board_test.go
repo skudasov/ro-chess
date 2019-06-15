@@ -387,9 +387,9 @@ func TestBoardSuite(t *testing.T) {
 		updMsg := cUpdateBatch{
 			msg.UpdateBatch{
 				CombatLog: []e.CombatEvent{
-					{X: 0, Y: 1, Dmg: -5, Crit: false},
-					{X: 0, Y: 2, Dmg: -5, Crit: false},
-					{X: 0, Y: 1, Dmg: -5, Crit: false},
+					{nil, &e.Point{0, 1}, -5, ""},
+					{nil, &e.Point{0, 2}, -5, ""},
+					{nil, &e.Point{0, 1}, -5, ""},
 				},
 				Figures: []e.Figurable{
 					e.NewConstDmgWarrior(
@@ -435,9 +435,9 @@ func TestBoardSuite(t *testing.T) {
 		updMsg := cUpdateBatch{
 			msg.UpdateBatch{
 				CombatLog: []e.CombatEvent{
-					{X: 0, Y: 2, Dmg: -5, Crit: false},
-					{X: 0, Y: 1, Dmg: -5, Crit: false},
-					{X: 0, Y: 2, Dmg: -5, Crit: false},
+					{nil, &e.Point{0, 2}, -5, ""},
+					{nil, &e.Point{0, 1}, -5, ""},
+					{nil, &e.Point{0, 2}, -5, ""},
 				},
 				Figures: []e.Figurable{
 					e.NewConstDmgWarrior(
@@ -477,8 +477,9 @@ func TestBoardSuite(t *testing.T) {
 		g.p1ActivatesFigure(0, 1)
 		g.p2MovesFromPool(0, 0, 2)
 		g.p2ActivatesFigure(0, 2)
-		skillMsg := cCastSkill{msg.CastSkill{"p2", board, e.Pair{0, 1}, e.Pair{0, 2}, "fireball"}}
+		skillMsg := cCastSkill{msg.CastSkill{"p2", board, e.Point{0, 1}, e.Point{0, 2}, "fireball"}}
 		g.P2.send(skillMsg)
-		g.turnEnds()
+		supd1, _, _, _ := g.turnEnds()
+		fmt.Printf("supd1: %s\n", supd1)
 	})
 }

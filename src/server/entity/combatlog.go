@@ -2,7 +2,10 @@ package entity
 
 // CombatEvent represents combat event for front-ent animation
 type CombatEvent struct {
-	X, Y int
+	// think about consumption and different skills animation
+	From *Point
+	To   *Point
 	Dmg  int
-	Crit bool
+	// if it's empty, figure uses auto-attack
+	AnimationName string
 }

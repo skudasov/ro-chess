@@ -1,15 +1,15 @@
 package entity
 
 // SkillFunc skill mechanics goes here
-type SkillFunc func(string, Pair, Pair, *[]Figurable, *[]Player, *[]CombatEvent)
+type SkillFunc func(string, Point, Point, *[]Figurable, *[]Player, *[]CombatEvent)
 
 // AppliedSkill Entity of skill application from one unit to another
 type AppliedSkill struct {
 	Board string
 	// How many times skill will be applied
 	Times int
-	From  Pair
-	To    Pair
+	From  Point
+	To    Point
 	Name  string
 }
 

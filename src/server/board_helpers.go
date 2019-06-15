@@ -42,8 +42,10 @@ func (m *boardGame) p1MovesFromPool(PoolX, X, Y int) (interface{}, interface{}) 
 func (m *boardGame) turnEnds() (interface{}, interface{}, interface{}, interface{}) {
 	m.P2.send(cEndTurn{msg.EndTurn{"p2", m.board}})
 	m.P1.send(cEndTurn{msg.EndTurn{"p1", m.board}})
+	// skills phase
 	sfResp2 := m.P2.read("UpdateBatch")
 	sfResp1 := m.P1.read("UpdateBatch")
+	// auto-attack && move phase
 	resp2 := m.P2.read("UpdateBatch")
 	resp1 := m.P1.read("UpdateBatch")
 	m.P2.read("YourTurn")

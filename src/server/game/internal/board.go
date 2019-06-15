@@ -3,7 +3,7 @@ package internal
 import (
 	"fmt"
 	"github.com/f4hrenh9it/ro-chess/src/server/conf"
-	"github.com/f4hrenh9it/ro-chess/src/server/entity"
+	e "github.com/f4hrenh9it/ro-chess/src/server/entity"
 	"github.com/f4hrenh9it/ro-chess/src/server/msg"
 	"github.com/name5566/leaf/log"
 	"math/rand"
@@ -17,21 +17,25 @@ import (
 var BS = make(map[string]*Board)
 
 // SkillLibrary All skills mechanics goes here
-type SkillLibrary map[string]entity.SkillFunc
+type SkillLibrary map[string]e.SkillFunc
 
 // SL global skill library to learn from
 // every skill has access to all board figures and can update figures, players, create combat log
 // If skill has *from* pair and *to* is nil - it's buff skill
 // or target of application will be found by filtering units on board (player reference required?)
 // If skill has both pairs, second pair will be target of skill or center of AOE skill
+// after players/figures transformation one must attach CombatEvents in order:
+// 1. MP/HP consumption of source (caster)
+// 2. If it's targeted skill or we need animation (ex. fireball) send
 var SL = SkillLibrary{
-	"fireball": func(boardName string, from entity.Pair, to entity.Pair, uf *[]entity.Figurable, up *[]entity.Player, clog *[]entity.CombatEvent) {
+	"fireball": func(boardName string, from e.Point, to e.Point, uf *[]e.Figurable, up *[]e.Player, clog *[]e.CombatEvent) {
 		fromFigure := BS[boardName].Canvas[from.Y][from.X].Figure
 		toFigure := BS[boardName].Canvas[to.Y][to.X].Figure
 		log.Debug("interacting figures: %s -> %s", fromFigure.GetName(), toFigure.GetName())
 		log.Debug("casting %s: %d, %d -> %d, %d", "fireball", from.X, from.Y, to.X, to.Y)
 		toFigure.SetHP(toFigure.GetHP() - 200)
 		*uf = append(*uf, toFigure)
+		*clog = append(*clog, e.CombatEvent{})
 	},
 }
 
@@ -128,7 +132,7 @@ func (m *Board) checkStartZone(x, y int, side side) bool {
 	return false
 }
 
-func (m *Board) moveFromPool(pToken string, side side, poolX, X, Y int) (entity.Figurable, error) {
+func (m *Board) moveFromPool(pToken string, side side, poolX, X, Y int) (e.Figurable, error) {
 	player := m.Players[pToken]
 	figure := player.FigurePool.Get(poolX)
 	if !m.checkStartZone(X, Y, side) {
