@@ -71,6 +71,10 @@ type cCastSkill struct {
 	CastSkill msg.CastSkill
 }
 
+type cLearnSkillMsg struct {
+	LearnSkill msg.LearnSkill
+}
+
 func oneUnitBoard() {
 	conf.Server.BoardSizeX = 1
 	conf.Server.BoardSizeY = 3

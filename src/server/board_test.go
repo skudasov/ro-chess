@@ -469,6 +469,7 @@ func TestBoardSuite(t *testing.T) {
 	})
 
 	t.Run("TestSkillApplication", func(t *testing.T) {
+		// TODO: here things will go messy, implement sandbox and return after to settle XP/Skills and other mechanics to complete tests
 		twoUnitsCombatBoard()
 		g := newBoardGame(t, board)
 		defer g.end()
@@ -477,8 +478,10 @@ func TestBoardSuite(t *testing.T) {
 		g.p1ActivatesFigure(0, 1)
 		g.p2MovesFromPool(0, 0, 2)
 		g.p2ActivatesFigure(0, 2)
-		skillMsg := cCastSkill{msg.CastSkill{"p2", board, e.Point{0, 1}, e.Point{0, 2}, "fireball"}}
-		g.P2.send(skillMsg)
+		learnSkillMsg := cLearnSkillMsg{msg.LearnSkill{"p2", board, "firebolt", e.Point{0, 1}}}
+		g.P2.send(learnSkillMsg)
+		castSkillMsg := cCastSkill{msg.CastSkill{"p2", board, e.Point{0, 1}, e.Point{0, 2}, "firebolt"}}
+		g.P2.send(castSkillMsg)
 		supd1, _, _, _ := g.turnEnds()
 		fmt.Printf("supd1: %s\n", supd1)
 	})

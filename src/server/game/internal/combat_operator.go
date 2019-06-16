@@ -35,6 +35,8 @@ func (m *Board) processSkillPhase(updatedFigures *[]e.Figurable, updatedPlayers 
 			f.ApplySkills(updatedFigures, updatedPlayers, clog)
 		}
 	}
+	m.removeDeadBoardFigures()
+	m.removeDeadCanvasFigures()
 	for _, p := range m.Players {
 		if p.HP <= 0 {
 			return &p.Name
@@ -63,15 +65,14 @@ func (m *Board) processAttackPhase(updatedFigures *[]e.Figurable, clog *[]e.Comb
 		attacker := f
 		defender := m.Canvas[enemyY][enemyX].Figure
 		if defender != nil {
-			log.Debug("conflict!")
+			log.Debug("auto-attack conflict!")
 			defX, defY := defender.GetCoords()
 			for {
 				aDmg := attacker.PerformAttack()
 				log.Debug("attacker dmg: %d", aDmg)
 				defender.SetHP(defender.GetHP() - aDmg)
 				*clog = append(*clog, e.CombatEvent{nil, &e.Point{defX, defY}, -aDmg, ""})
-				if defender.GetHP() <= 0 {
-					defender.SetAlive(false)
+				if defender.GetAlive() == false {
 					m.Canvas[defY][defX].Figure = nil
 					log.Debug("defender on %d, %d, figure of %s dies", atkX, atkY, defender.GetOwnerName())
 					*updatedFigures = append(*updatedFigures, defender)
@@ -81,8 +82,7 @@ func (m *Board) processAttackPhase(updatedFigures *[]e.Figurable, clog *[]e.Comb
 				log.Debug("defender dmg: %d", dDmg)
 				attacker.SetHP(attacker.GetHP() - dDmg)
 				*clog = append(*clog, e.CombatEvent{nil, &e.Point{atkX, atkY}, -dDmg, ""})
-				if attacker.GetHP() <= 0 {
-					attacker.SetAlive(false)
+				if attacker.GetAlive() == false {
 					m.Canvas[atkY][atkX].Figure = nil
 					log.Debug("attacker on %d, %d, figure of %s dies", atkX, atkY, attacker.GetOwnerName())
 					*updatedFigures = append(*updatedFigures, attacker)
@@ -91,7 +91,7 @@ func (m *Board) processAttackPhase(updatedFigures *[]e.Figurable, clog *[]e.Comb
 			}
 		}
 	}
-	m.removeDeadFigures(&m.Figures)
+	m.removeDeadBoardFigures()
 }
 
 func (m *Board) processMovePhase(updatedFigures *[]e.Figurable) {
@@ -154,7 +154,7 @@ func (m *Board) processScoringPhase(figures *[]e.Figurable, players *[]e.Player)
 			// if it's squad, do the math and replace all squad units in one time
 		}
 	}
-	m.removeDeadFigures(&m.Figures)
+	m.removeDeadBoardFigures()
 	for _, p := range m.Players {
 		if p.HP <= 0 {
 			return &p.Name
@@ -163,10 +163,21 @@ func (m *Board) processScoringPhase(figures *[]e.Figurable, players *[]e.Player)
 	return nil
 }
 
-func (m *Board) removeDeadFigures(bfs *[]e.Figurable) {
-	for i, bf := range *bfs {
+func (m *Board) removeDeadBoardFigures() {
+	for i, bf := range m.Figures {
 		if bf.GetAlive() == false {
-			*bfs = append((*bfs)[:i], (*bfs)[i+1:]...)
+			m.Figures = append(m.Figures[:i], m.Figures[i+1:]...)
+		}
+	}
+}
+
+func (m *Board) removeDeadCanvasFigures() {
+	//toRemove := make([]e.Point, 0)
+	for y := range m.Canvas {
+		for x := range m.Canvas[y] {
+			if m.Canvas[y][x].Figure != nil && m.Canvas[y][x].Figure.GetAlive() == false {
+				m.Canvas[y][x].Figure = nil
+			}
 		}
 	}
 }

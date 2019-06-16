@@ -12,4 +12,5 @@ func init() {
 	msg.Processor.SetRouter(&msg.MoveFigure{}, game.ChanRPC)
 	msg.Processor.SetRouter(&msg.ActivateFigure{}, game.ChanRPC)
 	msg.Processor.SetRouter(&msg.CastSkill{}, game.ChanRPC)
+	msg.Processor.SetRouter(&msg.LearnSkill{}, game.ChanRPC)
 }

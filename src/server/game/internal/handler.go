@@ -27,6 +27,7 @@ func init() {
 	handler(&msg.Disconnect{}, handleDisconnect)
 	handler(&msg.EndTurn{}, handleEndTurn)
 	handler(&msg.MoveFigure{}, handleMoveFromPool)
+	handler(&msg.LearnSkill{}, handleLearnSkill)
 	handler(&msg.CastSkill{}, handleCastSkill)
 	handler(&msg.ActivateFigure{}, handleActivateFigure)
 }
@@ -203,10 +204,23 @@ func handleCastSkill(args []interface{}) {
 	}
 	board := BS[m.Board]
 	fromUnit := board.Canvas[m.From.Y][m.From.X]
-	fromUnit.Figure.LearnSkill("fireball", SL["fireball"])
 	from := entity.Point{m.From.X, m.From.Y}
 	to := entity.Point{m.To.X, m.To.Y}
+	// TODO: check for skill availability here?
 	fromUnit.Figure.AddSkillToRotation(m.Board, m.Name, from, to)
+}
+
+func handleLearnSkill(args []interface{}) {
+	m := args[0].(*msg.LearnSkill)
+	a := args[1].(gate.Agent)
+	log.Debug("learn skill msg")
+	if _, ok := BS[m.Board]; !ok {
+		a.WriteMsg(&msg.GameError{newErrGameNoBoard().Error()})
+		return
+	}
+	board := BS[m.Board]
+	fromUnit := board.Canvas[m.From.Y][m.From.X]
+	fromUnit.Figure.LearnSkill("firebolt", SL["firebolt"])
 }
 
 func handleActivateFigure(args []interface{}) {

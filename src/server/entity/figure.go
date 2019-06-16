@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math/rand"
 	"time"
+
+	"github.com/name5566/leaf/log"
 )
 
 type figure struct {
@@ -149,6 +151,10 @@ func (m *figure) GetVisualMark() string {
 // SetHP sets unit hp
 func (m *figure) SetHP(hp int) {
 	m.HP = hp
+	if m.HP <= 0 {
+		log.Debug("figure %s on %d, %d is dead", m.Name, m.X, m.Y)
+		m.SetAlive(false)
+	}
 }
 
 // GetHP gets unit hp

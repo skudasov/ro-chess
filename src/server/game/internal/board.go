@@ -26,13 +26,22 @@ type SkillLibrary map[string]e.SkillFunc
 // If skill has both pairs, second pair will be target of skill or center of AOE skill
 // after players/figures transformation one must attach CombatEvents in order:
 // 1. MP/HP consumption of source (caster)
-// 2. If it's targeted skill or we need animation (ex. fireball) send
+// 2. If it's targeted skill or we need animation (ex. firebolt) send
+// TODO: think about skills as general transformation function that contains two slices of PointsOfAction which consists of
+// TODO: 1. X,Y
+// TODO: 2. Consumption that will be rendered (-HP, +MP, etc.)
+// TODO: AnimationName
+// TODO: So clog for fireball will be:
+// TODO: 1. clog with animation of casting, consumption of MP and XY of caster
+// TODO: 2. clog with animation of flying fireball, two XY, from and to
+// TODO: 3. clog with units taking damage, where from = nil, and to is a slice of diminished dmg
+// TODO: can we simplify this?
 var SL = SkillLibrary{
-	"fireball": func(boardName string, from e.Point, to e.Point, uf *[]e.Figurable, up *[]e.Player, clog *[]e.CombatEvent) {
+	"firebolt": func(boardName string, from e.Point, to e.Point, uf *[]e.Figurable, up *[]e.Player, clog *[]e.CombatEvent) {
 		fromFigure := BS[boardName].Canvas[from.Y][from.X].Figure
 		toFigure := BS[boardName].Canvas[to.Y][to.X].Figure
 		log.Debug("interacting figures: %s -> %s", fromFigure.GetName(), toFigure.GetName())
-		log.Debug("casting %s: %d, %d -> %d, %d", "fireball", from.X, from.Y, to.X, to.Y)
+		log.Debug("casting %s: %d, %d -> %d, %d", "firebolt", from.X, from.Y, to.X, to.Y)
 		toFigure.SetHP(toFigure.GetHP() - 200)
 		*uf = append(*uf, toFigure)
 		*clog = append(*clog, e.CombatEvent{})

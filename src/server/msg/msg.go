@@ -3,7 +3,7 @@ package msg
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/f4hrenh9it/ro-chess/src/server/entity"
+	e "github.com/f4hrenh9it/ro-chess/src/server/entity"
 	ljson "github.com/name5566/leaf/network/json"
 )
 
@@ -19,6 +19,8 @@ func init() {
 	Processor.Register(&TurnFigurePool{})
 	Processor.Register(&EndTurn{})
 	Processor.Register(&YourTurn{})
+	Processor.Register(&LvlUp{})
+	Processor.Register(&LearnSkill{})
 	Processor.Register(&CastSkill{})
 	Processor.Register(&ActivateFigure{})
 	Processor.Register(&FigureUpdate{})
@@ -53,7 +55,7 @@ type GameStarted struct {
 
 // TurnFigurePool msg
 type TurnFigurePool struct {
-	Figures []entity.Figurable
+	Figures []e.Figurable
 }
 
 // GameError msg
@@ -90,22 +92,35 @@ type ActivateFigure struct {
 
 // FigureUpdate msg
 type FigureUpdate struct {
-	Figure entity.Figurable
+	Figure e.Figurable
+}
+
+// LvlUp msg
+type LvlUp struct {
+	AvailableSkills []string
+}
+
+// LearnSkill msg (after player receives LvlUp msg he can learn a skill)
+type LearnSkill struct {
+	Token string
+	Board string
+	Name  string
+	From  e.Point
 }
 
 // UpdateBatch msg
 type UpdateBatch struct {
-	Players   []entity.Player      `json:"Players,omitempty"`
-	CombatLog []entity.CombatEvent `json:"CombatLog,omitempty"`
-	Figures   []entity.Figurable   `json:"Figures,omitempty"`
+	Players   []e.Player      `json:"Players,omitempty"`
+	CombatLog []e.CombatEvent `json:"CombatLog,omitempty"`
+	Figures   []e.Figurable   `json:"Figures,omitempty"`
 }
 
 // CastSkill msg
 type CastSkill struct {
 	Token string
 	Board string
-	From  entity.Point
-	To    entity.Point
+	From  e.Point
+	To    e.Point
 	Name  string
 }
 
@@ -127,7 +142,7 @@ func (ce *TurnFigurePool) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		return err
 	}
-	ce.Figures = make([]entity.Figurable, len(rawMsgsFigures))
+	ce.Figures = make([]e.Figurable, len(rawMsgsFigures))
 
 	var m map[string]interface{}
 	for index, rawMessage := range rawMsgsFigures {
@@ -138,13 +153,13 @@ func (ce *TurnFigurePool) UnmarshalJSON(b []byte) error {
 
 		switch m["Type"] {
 		case "warrior":
-			var p entity.Warrior
+			var p e.Warrior
 			if err := json.Unmarshal(*rawMessage, &p); err != nil {
 				return err
 			}
 			ce.Figures[index] = &p
 		case "mage":
-			var g entity.Mage
+			var g e.Mage
 			if err := json.Unmarshal(*rawMessage, &g); err != nil {
 				return err
 			}
@@ -169,10 +184,10 @@ func (ce *UpdateBatch) UnmarshalJSON(b []byte) error {
 		if err != nil {
 			return err
 		}
-		ce.Figures = make([]entity.Figurable, len(figures))
+		ce.Figures = make([]e.Figurable, len(figures))
 	}
 
-	var players []entity.Player
+	var players []e.Player
 	if _, ok := objMap["Players"]; ok {
 		if err = json.Unmarshal(*objMap["Players"], &players); err != nil {
 			return err
@@ -180,7 +195,7 @@ func (ce *UpdateBatch) UnmarshalJSON(b []byte) error {
 		ce.Players = players
 	}
 
-	var combatLog []entity.CombatEvent
+	var combatLog []e.CombatEvent
 	if _, ok := objMap["CombatLog"]; ok {
 		if err = json.Unmarshal(*objMap["CombatLog"], &combatLog); err != nil {
 			return err
@@ -195,17 +210,15 @@ func (ce *UpdateBatch) UnmarshalJSON(b []byte) error {
 			return err
 		}
 
-		fmt.Printf("map here: %s\n", m)
-
 		switch m["Type"] {
 		case "warrior":
-			var p entity.Warrior
+			var p e.Warrior
 			if err := json.Unmarshal(*rawMessage, &p); err != nil {
 				return err
 			}
 			ce.Figures[index] = &p
 		case "mage":
-			var g entity.Mage
+			var g e.Mage
 			if err := json.Unmarshal(*rawMessage, &g); err != nil {
 				return err
 			}
