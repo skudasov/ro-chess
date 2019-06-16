@@ -100,8 +100,8 @@ func handleJoin(args []interface{}) {
 
 		poolFigures := player.FigurePool.GetFigures()
 
-		player.Agent.WriteMsg(&msg.TurnFigurePool{poolFigures})
-		player.Agent.WriteMsg(&msg.YourTurn{})
+		board.broadcast(&msg.TurnFigurePool{poolFigures})
+		board.broadcast(&msg.YourTurn{})
 		// here we are waiting for client to end turn by himself
 		return
 	}

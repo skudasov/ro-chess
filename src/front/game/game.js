@@ -1,7 +1,5 @@
-// mods by Patrick OReilly
-// twitter: @pato_reilly
 import config from '../config'
-import ws from './wshandler';
+import {GameState} from "./state";
 
 let map;
 let boardLayer;
@@ -14,6 +12,8 @@ let figuresLayer;
 let figuresLayerName = 'figures';
 
 let tileNumFigure = 196;
+
+export let GS = new GameState();
 
 export default class w2chGame extends Phaser.State {
     init(args) {

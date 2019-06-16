@@ -22,6 +22,8 @@ func newBoardGame(t *testing.T, board string) *boardGame {
 	p1.read("GameStarted")
 	p2.read("TurnFigurePool")
 	p2.read("YourTurn")
+	p1.read("TurnFigurePool")
+	p1.read("YourTurn")
 	return &boardGame{t, p1, p2, board}
 }
 
