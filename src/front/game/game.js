@@ -3,13 +3,25 @@
 import config from '../config'
 import ws from './wshandler';
 
+let map;
+let boardLayer;
+let boardLayerName = 'board';
+let bgLayer;
+let bgLayerName = 'background';
+let poolLayer;
+let poolLayerName = 'pool';
+let figuresLayer;
+let figuresLayerName = 'figures';
+
+let tileNumFigure = 196;
+
 export default class w2chGame extends Phaser.State {
     init(args) {
     }
 
     preload(game) {
         game.load.tilemap(config.tileMapName, config.tileMapPath, null, Phaser.Tilemap.TILED_JSON);
-        game.load.image('tiles', '../assets/maps/terrain.png');
+        game.load.image('tiles-key', '../assets/maps/terrain.png');
 
         game.load.image('tower', '../assets/sprites/tower-32.png');
         game.load.image('bullet', '../assets/sprites/bullet.png');
@@ -21,14 +33,43 @@ export default class w2chGame extends Phaser.State {
 
     create(game) {
         game.physics.startSystem(Phaser.Physics.ARCADE);
-        let map = game.add.tilemap('level1');
+        map = game.add.tilemap(config.tileMapName);
 
-        map.addTilesetImage('terrain', 'tiles');
-        let layer = map.createLayer('terrain1-layer');
-        let layer2 = map.createLayer('terrain2-layer');
-        let layer3 = map.createLayer('terrain3-layer');
+        map.addTilesetImage('terrain', 'tiles-key');
+        bgLayer = map.createLayer(bgLayerName);
+        boardLayer = map.createLayer(boardLayerName);
+        poolLayer = map.createLayer(poolLayerName);
+        figuresLayer = map.createLayer(figuresLayerName);
+        fillPoolWithFigures(game)
+    }
+
+    update(game) {
+        processClick(game)
     }
 }
+
+const fillPoolWithFigures = (game) => {
+    let startTileNum = tileNumFigure;
+    let endTileNum = startTileNum + 6;
+    let tileX = 2;
+    let tileY = 12;
+  for (let i = tileNumFigure; i < endTileNum; i++) {
+      console.log(`putting tile on ${tileX}, ${tileY}`);
+      map.putTile(tileNumFigure, tileX, tileY, poolLayerName);
+      tileY++;
+  }
+};
+
+const processClick = (game) => {
+    let x = game.input.activePointer.worldX;
+    let y = game.input.activePointer.worldY;
+    if (game.input.mousePointer.isDown) {
+        console.log(`clicking on ${x}, ${y}`);
+        map.putTile(tileNumFigure, boardLayer.getTileX(x), boardLayer.getTileY(y), figuresLayerName);
+    }
+    let currentTile = map.getTile(boardLayer.getTileX(x), boardLayer.getTileY(y));
+    console.log(`current tile: ${currentTile}`);
+};
 
 
 // var game = new Phaser.Game(800, 600, Phaser.CANVAS, 'phaser-example', { preload: preload, create: create, update: update, render: render });

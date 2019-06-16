@@ -1,8 +1,8 @@
 export default {
-    tileMapName: 'level1',
-    tileMapPath: 'assets/maps/big.json',
-    gameWidth: 1024,
-    gameHeight: 768,
+    tileMapName: 'chess',
+    tileMapPath: 'assets/maps/chess2.json',
+    gameWidth: 800,
+    gameHeight: 600,
     fullScreen: true,
     logging: true,
     localStorageName: 'phaseres6webpack',

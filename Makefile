@@ -52,3 +52,8 @@ all: build generate test lint
 	kill ${SRVPROC} || true
 	./${TARGET_NAME} &
 	cd src/front && npm run dev
+
+run-front:
+	kill ${SRVPROC} || true
+	./${TARGET_NAME} &
+	cd src/front && npm run dev
