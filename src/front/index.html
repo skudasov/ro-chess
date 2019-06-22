@@ -23,16 +23,25 @@
 <body>
   <script>
     $(document).ready(function(){
-      $("#btn").click(function(){
-        var player = $("#in1").val();
+      $("#connect-btn").click(function(){
+        var player = $("#inp-connect").val();
         connectToServer(player);
+      });
+    });
+    $(document).ready(function(){
+      $("#turns-btn").click(function(){
+        var turns = $("#inp-turns").val();
+        rewindTurns(turns);
       });
     });
   </script>
   <div class="container">
     <div class="jumbotron">
-      <input id="in1" type="text">
-      <button type="button" id="btn" class="btn-primary">Connect</button>
+      <input id="inp-connect" type="text">
+      <button type="button" id="connect-btn" class="btn-primary">Connect</button>
+      <p></p>
+      <input id="inp-turns" type="text">
+      <button type="button" id="turns-btn" class="btn-success">Rewind</button>
       <p></p>
       <div id="log" class="pre-scrollable scrollable"></div>
       <div id="content">

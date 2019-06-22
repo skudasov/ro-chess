@@ -6,3 +6,12 @@ export const joinMsg =  (token, name) => {
         }
     }
 };
+
+export const turnEndMsg =  (token, board) => {
+    return {
+        'EndTurn': {
+            'Token': token,
+            'Board': board,
+        }
+    }
+};
