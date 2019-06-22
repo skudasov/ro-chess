@@ -20,7 +20,6 @@ var Server struct {
 	ConsolePort int
 	ProfilePath string
 
-	FixedTurns     string
 	PlayerHP       int
 	PlayerMP       int
 	FigurePoolType string

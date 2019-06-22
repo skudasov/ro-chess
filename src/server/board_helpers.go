@@ -2,8 +2,8 @@ package server
 
 import (
 	"github.com/f4hrenh9it/ro-chess/src/server/msg"
-	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 type boardGame struct {
@@ -16,14 +16,17 @@ type boardGame struct {
 func newBoardGame(t *testing.T, board string) *boardGame {
 	p1 := newClient("p1")
 	p2 := newClient("p2")
-	p1.sendAndRead(cJoin{msg.Join{"p1", "p1"}}, "Joined")
-	started := p2.sendAndRead(cJoin{msg.Join{"p2", "p2"}}, "GameStarted")
-	assert.Equal(t, cGameStarted{msg.GameStarted{"p2"}}, started)
-	p1.read("GameStarted")
-	p2.read("TurnFigurePool")
-	p2.read("YourTurn")
+	p1.send(cJoin{msg.Join{"p1", "p1"}})
+	// Players can race, in real usage it's ok
+	// creating hashing function to get predictable sides, or msg to determine side in client is meh
+	time.Sleep(20 * time.Millisecond)
+	p2.send(cJoin{msg.Join{"p2", "p2"}})
+	p1.read("Joined")
+	p2.read("Joined")
 	p1.read("TurnFigurePool")
+	p2.read("TurnFigurePool")
 	p1.read("YourTurn")
+	p2.read("YourTurn")
 	return &boardGame{t, p1, p2, board}
 }
 

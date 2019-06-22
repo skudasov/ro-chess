@@ -58,6 +58,7 @@ func handleDisconnect(args []interface{}) {
 	log.Debug("Board players left: %d", len(board.Players))
 	if len(board.Players) == 0 {
 		log.Debug("deleting Board %s", m.Board)
+		registeringQueue = make([]*registering, 0)
 		delete(BS, m.Board)
 	}
 	for _, r := range registeringQueue {
@@ -80,35 +81,27 @@ func handleJoin(args []interface{}) {
 	// make auth here or in login module
 	// pull info from db after login
 
-	// fetch player info here, create player and start game
-
-	// make match making here, for now just start if we have two
 	bname := "abc"
 	if len(registeringQueue) == 2 {
 		players := initPlayers()
 
 		log.Debug("sizes: x = %d, y = %d", conf.Server.BoardSizeX, conf.Server.BoardSizeY)
-		board, turn := createBoard(
+		board, _ := createBoard(
 			bname,
 			players,
 			conf.Server.BoardSizeX, conf.Server.BoardSizeY,
 		)
-		board.broadcast(&msg.GameStarted{turn})
 		// send pool figures for the first turn
-		pName := board.Turn
-		player := board.Players[pName]
 
-		poolFigures := player.FigurePool.GetFigures()
-
-		board.broadcast(&msg.TurnFigurePool{poolFigures})
-		board.broadcast(&msg.YourTurn{})
+		for _, p := range board.Players {
+			poolFigures := p.FigurePool.GetFigures()
+			p.Agent.WriteMsg(&msg.Joined{bname})
+			p.Agent.WriteMsg(&msg.TurnFigurePool{poolFigures})
+			p.Agent.WriteMsg(&msg.YourTurn{})
+		}
 		// here we are waiting for client to end turn by himself
 		return
 	}
-
-	a.WriteMsg(&msg.Joined{
-		Board: bname,
-	})
 }
 
 func handleMoveFromPool(args []interface{}) {

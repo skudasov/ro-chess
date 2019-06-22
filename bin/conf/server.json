@@ -4,7 +4,6 @@
 	"TCPAddr": "127.0.0.1:3563",
 	"WSAddr": "127.0.0.1:3653",
 	"MaxConnNum": 20000,
-	"FixedTurns": "",
 	"PlayerHP": 100,
 	"PlayerMP": 0,
 	"FigurePoolType": "infinite",

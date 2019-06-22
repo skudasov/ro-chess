@@ -7,6 +7,7 @@ import (
 	"github.com/f4hrenh9it/ro-chess/src/server/msg"
 	"github.com/name5566/leaf/log"
 	"math/rand"
+	"sort"
 	"time"
 )
 
@@ -59,25 +60,19 @@ func createBoard(boardName string, players map[string]*player, xSize, ySize int)
 			c[i][j] = &cell{}
 		}
 	}
-	var ft string
-	if conf.Server.FixedTurns != "" {
-		ft = conf.Server.FixedTurns
-	} else {
-		ft = firstTurn(players)
-	}
 
 	b := &Board{
 		Players:  players,
 		Canvas:   c,
 		TurnEnds: make(map[string]bool),
-		Turn:     ft}
+	}
 	b.createStartZones()
 	for _, p := range players {
 		p.Board = b
 	}
 	BS[boardName] = b
 	log.Debug("Board created\n")
-	return BS[boardName], ft
+	return BS[boardName], ""
 }
 
 func firstTurn(players map[string]*player) string {
@@ -193,8 +188,13 @@ func (m *Board) visualize() {
 }
 
 func (m *Board) broadcast(message interface{}) {
-	for _, p := range m.Players {
-		p.Agent.WriteMsg(message)
+	sortedPKeys := make([]string, 0)
+	for pkey := range m.Players {
+		sortedPKeys = append(sortedPKeys, pkey)
+	}
+	sort.Strings(sortedPKeys)
+	for k := range m.Players {
+		m.Players[k].Agent.WriteMsg(message)
 	}
 }
 

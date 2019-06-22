@@ -25,7 +25,6 @@ func runLeaf() {
 	lconf.LogFlag = conf.LogFlag
 	lconf.ConsolePort = conf.Server.ConsolePort
 	lconf.ProfilePath = conf.Server.ProfilePath
-	conf.Server.FixedTurns = "p2"
 
 	go leaf.Run(
 		game.Module,
@@ -37,18 +36,8 @@ func runLeaf() {
 
 func TestBoardSuite(t *testing.T) {
 	runLeaf()
-	t.Run("TestConnect", func(t *testing.T) {
-		p1 := newClient("p1")
-		defer p1.Conn.Close()
-		res := p1.sendAndRead(
-			cJoin{msg.Join{"p1", "p1"}},
-			"Joined")
-		fmt.Printf("board is: %s\n", res)
-		res2 := p1.sendAndRead(cDisconnect{msg.Disconnect{"p1", board, "leaving"}}, "Disconnect")
-		fmt.Printf("disconnect res: %s", res2)
-	})
 
-	t.Run("TestBoardRotation", func(t *testing.T) {
+	t.Run("TestBoardConnectionsRotation", func(t *testing.T) {
 		g := newBoardGame(t, board)
 		g.end()
 		g = newBoardGame(t, board)
